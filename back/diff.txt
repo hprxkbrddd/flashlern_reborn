@@ -1,0 +1,2018 @@
+diff --git a/back/compose.yaml b/back/compose.yaml
+index 3ea8bd9..71173a4 100644
+--- a/back/compose.yaml
++++ b/back/compose.yaml
+@@ -18,20 +18,20 @@ services:
+       interval: 10s
+       retries: 5
+ 
+-  server:
+-    build:
+-      context: .
+-    container_name: flashlearn-backend
+-    ports:
+-      - "8080:8080"
+-    depends_on:
+-      mysql:
+-        condition: service_healthy
+-    environment:
+-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/flashlearn
+-      SPRING_DATASOURCE_USERNAME: flashuser
+-      SPRING_DATASOURCE_PASSWORD: flashpass
+-      SPRING_PROFILES_ACTIVE: docker
++#  server:
++#    build:
++#      context: .
++#    container_name: flashlearn-backend
++#    ports:
++#      - "8080:8080"
++#    depends_on:
++#      mysql:
++#        condition: service_healthy
++#    environment:
++#      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/flashlearn
++#      SPRING_DATASOURCE_USERNAME: flashuser
++#      SPRING_DATASOURCE_PASSWORD: flashpass
++#      SPRING_PROFILES_ACTIVE: docker
+ 
+ volumes:
+   mysql_data:
+diff --git a/back/src/main/java/io/github/flashlearn/app/auth/controller/AuthController.java b/back/src/main/java/io/github/flashlearn/app/auth/controller/AuthController.java
+index 02bf4a3..367d0ff 100644
+--- a/back/src/main/java/io/github/flashlearn/app/auth/controller/AuthController.java
++++ b/back/src/main/java/io/github/flashlearn/app/auth/controller/AuthController.java
+@@ -2,11 +2,14 @@ package io.github.flashlearn.app.auth.controller;
+ 
+ import io.github.flashlearn.app.auth.dto.AuthResponse;
+ import io.github.flashlearn.app.auth.dto.UserLoginRequest;
+-import io.github.flashlearn.app.user.entity.User;
+ import io.github.flashlearn.app.auth.service.AuthService;
++import io.github.flashlearn.app.user.entity.User;
+ import lombok.RequiredArgsConstructor;
+ import org.springframework.http.ResponseEntity;
+-import org.springframework.web.bind.annotation.*;
++import org.springframework.web.bind.annotation.PostMapping;
++import org.springframework.web.bind.annotation.RequestBody;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.RestController;
+ 
+ @RequestMapping("api/auth")
+ @RestController
+@@ -20,7 +23,7 @@ public class AuthController {
+     public ResponseEntity<AuthResponse> loginUser(@RequestBody UserLoginRequest loginRequest) {
+         String token = authService.loginUser(loginRequest);
+         User user = authService.findUserByUsername(loginRequest.username());
+-
++        // зачем что-то еще кроме токена? это должно быть настолько важно, чтобы оправдать запрос к бд
+         return ResponseEntity.ok(new AuthResponse(token, user.getUsername(), user.getRole().name()));
+     }
+ }
+diff --git a/back/src/main/java/io/github/flashlearn/app/auth/controller/EmailConfirmationController.java b/back/src/main/java/io/github/flashlearn/app/auth/controller/EmailConfirmationController.java
+index e24d839..2616500 100644
+--- a/back/src/main/java/io/github/flashlearn/app/auth/controller/EmailConfirmationController.java
++++ b/back/src/main/java/io/github/flashlearn/app/auth/controller/EmailConfirmationController.java
+@@ -3,7 +3,10 @@ package io.github.flashlearn.app.auth.controller;
+ import io.github.flashlearn.app.auth.service.EmailConfirmationService;
+ import lombok.RequiredArgsConstructor;
+ import org.springframework.http.ResponseEntity;
+-import org.springframework.web.bind.annotation.*;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.RequestParam;
++import org.springframework.web.bind.annotation.RestController;
+ 
+ /**
+  * Controller to confirm token links sent by email.
+diff --git a/back/src/main/java/io/github/flashlearn/app/auth/controller/RegistrationController.java b/back/src/main/java/io/github/flashlearn/app/auth/controller/RegistrationController.java
+index 56fea66..b180678 100644
+--- a/back/src/main/java/io/github/flashlearn/app/auth/controller/RegistrationController.java
++++ b/back/src/main/java/io/github/flashlearn/app/auth/controller/RegistrationController.java
+@@ -1,14 +1,17 @@
+ package io.github.flashlearn.app.auth.controller;
+ 
+-import io.github.flashlearn.app.auth.dto.UserRegistrationResponse;
+ import io.github.flashlearn.app.auth.dto.UserRegistrationRequest;
+-import io.github.flashlearn.app.user.entity.User;
++import io.github.flashlearn.app.auth.dto.UserRegistrationResponse;
+ import io.github.flashlearn.app.auth.mapper.UserAuthMapper;
+ import io.github.flashlearn.app.auth.service.RegistrationService;
++import io.github.flashlearn.app.user.entity.User;
+ import lombok.RequiredArgsConstructor;
+ import org.springframework.http.HttpStatus;
+ import org.springframework.http.ResponseEntity;
+-import org.springframework.web.bind.annotation.*;
++import org.springframework.web.bind.annotation.PostMapping;
++import org.springframework.web.bind.annotation.RequestBody;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.RestController;
+ 
+ @RequestMapping("/api/auth")
+ @RequiredArgsConstructor
+diff --git a/back/src/main/java/io/github/flashlearn/app/auth/exception/InvalidCredentialsException.java b/back/src/main/java/io/github/flashlearn/app/auth/exception/InvalidCredentialsException.java
+deleted file mode 100644
+index 9b79572..0000000
+--- a/back/src/main/java/io/github/flashlearn/app/auth/exception/InvalidCredentialsException.java
++++ /dev/null
+@@ -1,7 +0,0 @@
+-package io.github.flashlearn.app.auth.exception;
+-
+-public class InvalidCredentialsException extends RuntimeException {
+-    public InvalidCredentialsException(String message) {
+-        super(message);
+-    }
+-}
+diff --git a/back/src/main/java/io/github/flashlearn/app/auth/mapper/UserAuthMapper.java b/back/src/main/java/io/github/flashlearn/app/auth/mapper/UserAuthMapper.java
+index d196a2c..34ce794 100644
+--- a/back/src/main/java/io/github/flashlearn/app/auth/mapper/UserAuthMapper.java
++++ b/back/src/main/java/io/github/flashlearn/app/auth/mapper/UserAuthMapper.java
+@@ -1,14 +1,13 @@
+ package io.github.flashlearn.app.auth.mapper;
+ 
++import io.github.flashlearn.app.auth.dto.UserRegistrationResponse;
+ import io.github.flashlearn.app.profile.dto.UpdateUserProfileResponse;
+ import io.github.flashlearn.app.profile.dto.UserProfileResponse;
+-import io.github.flashlearn.app.auth.dto.UserRegistrationResponse;
+-import io.github.flashlearn.app.user.entity.User;
+ import io.github.flashlearn.app.profile.service.AvatarUrlService;
++import io.github.flashlearn.app.user.entity.User;
+ import org.mapstruct.Context;
+ import org.mapstruct.Mapper;
+ import org.mapstruct.Mapping;
+-import org.springframework.context.annotation.Configuration;
+ 
+ @Mapper(componentModel = "spring")
+ public interface UserAuthMapper {
+diff --git a/back/src/main/java/io/github/flashlearn/app/auth/security/CustomUserDetails.java b/back/src/main/java/io/github/flashlearn/app/auth/security/CustomUserDetails.java
+new file mode 100644
+index 0000000..b7726d1
+--- /dev/null
++++ b/back/src/main/java/io/github/flashlearn/app/auth/security/CustomUserDetails.java
+@@ -0,0 +1,51 @@
++package io.github.flashlearn.app.auth.security;
++
++import io.github.flashlearn.app.user.entity.Role;
++import org.springframework.security.core.GrantedAuthority;
++import org.springframework.security.core.authority.SimpleGrantedAuthority;
++import org.springframework.security.core.userdetails.UserDetails;
++
++import java.util.Collection;
++import java.util.List;
++
++public record CustomUserDetails(
++        Long id,
++        String username,
++        String password,
++        Role role
++) implements UserDetails {
++    @Override
++    public Collection<? extends GrantedAuthority> getAuthorities() {
++        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
++    }
++
++    @Override
++    public String getPassword() {
++        return password;
++    }
++
++    @Override
++    public String getUsername() {
++        return username;
++    }
++
++    @Override
++    public boolean isAccountNonExpired() {
++        return true;
++    }
++
++    @Override
++    public boolean isAccountNonLocked() {
++        return true;
++    }
++
++    @Override
++    public boolean isCredentialsNonExpired() {
++        return true;
++    }
++
++    @Override
++    public boolean isEnabled() {
++        return true;
++    }
++}
+diff --git a/back/src/main/java/io/github/flashlearn/app/auth/security/CustomUserDetailsService.java b/back/src/main/java/io/github/flashlearn/app/auth/security/CustomUserDetailsService.java
+index d84c82d..4c08716 100644
+--- a/back/src/main/java/io/github/flashlearn/app/auth/security/CustomUserDetailsService.java
++++ b/back/src/main/java/io/github/flashlearn/app/auth/security/CustomUserDetailsService.java
+@@ -1,10 +1,12 @@
+ package io.github.flashlearn.app.auth.security;
+ 
++import io.github.flashlearn.app.user.entity.User;
+ import io.github.flashlearn.app.user.exception.UserNotFoundException;
+ import io.github.flashlearn.app.user.repository.UserRepository;
+ import lombok.RequiredArgsConstructor;
+ import org.springframework.security.core.userdetails.UserDetails;
+ import org.springframework.security.core.userdetails.UserDetailsService;
++import org.springframework.security.core.userdetails.UsernameNotFoundException;
+ import org.springframework.stereotype.Service;
+ 
+ @Service
+@@ -14,8 +16,9 @@ public class CustomUserDetailsService implements UserDetailsService {
+     private final UserRepository userRepository;
+ 
+     @Override
+-    public UserDetails loadUserByUsername(String username) throws UserNotFoundException {
+-        return userRepository.findByUsername(username)
+-                .orElseThrow(() -> new UserNotFoundException("User not found " + username));
++    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
++        User user = userRepository.findByUsername(username)
++                .orElseThrow(() -> new UserNotFoundException(username));
++        return new CustomUserDetails(user.getId(), user.getUsername(), user.getPassword(), user.getRole());
+     }
+ }
+diff --git a/back/src/main/java/io/github/flashlearn/app/auth/security/JwtAuthenticationFilter.java b/back/src/main/java/io/github/flashlearn/app/auth/security/JwtAuthenticationFilter.java
+index 62802ec..f8ef18e 100644
+--- a/back/src/main/java/io/github/flashlearn/app/auth/security/JwtAuthenticationFilter.java
++++ b/back/src/main/java/io/github/flashlearn/app/auth/security/JwtAuthenticationFilter.java
+@@ -1,16 +1,16 @@
+ package io.github.flashlearn.app.auth.security;
+ 
++import io.github.flashlearn.app.user.entity.Role;
++import io.jsonwebtoken.Claims;
+ import jakarta.servlet.FilterChain;
+ import jakarta.servlet.ServletException;
+ import jakarta.servlet.http.HttpServletRequest;
+ import jakarta.servlet.http.HttpServletResponse;
+ import lombok.RequiredArgsConstructor;
+-import org.slf4j.LoggerFactory;
+ import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
+ import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+ import org.springframework.security.core.context.SecurityContextHolder;
+-import org.springframework.security.core.userdetails.UserDetails;
+-import org.springframework.security.core.userdetails.UserDetailsService;
+ import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+ import org.springframework.stereotype.Component;
+ import org.springframework.web.filter.OncePerRequestFilter;
+@@ -24,7 +24,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
+     private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+ 
+     private final JwtTokenProvider jwtTokenProvider;
+-    private final UserDetailsService userDetailsService;
+ 
+     @Override
+     public void doFilterInternal(HttpServletRequest request,
+@@ -34,16 +33,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
+         try {
+             String bearer = request.getHeader("Authorization");
+             String token = null;
+-            if(bearer != null && bearer.startsWith("Bearer ")) {
++            if (bearer != null && bearer.startsWith("Bearer ")) {
+                 token = bearer.substring(7);
+             }
+-
+-            if(token != null && jwtTokenProvider.validateToken(token)) {
+-                String username = jwtTokenProvider.getUsernameFromToken(token);
+-
++            if (token != null) {
++                Claims claims = jwtTokenProvider.parse(token);
++                Long userId = claims.get("id", Long.class);
++                String username = claims.getSubject();
++                String roleStr = claims.get("role", String.class);
++                Role role = Role.valueOf(roleStr);
+                 // Защита: если уже есть аутентификация в контексте — не перезаписываем её
+-                if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+-                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
++                if (SecurityContextHolder.getContext().getAuthentication() == null) {
++                    CustomUserDetails userDetails = new CustomUserDetails(
++                            userId,
++                            username,
++                            null,
++                            role
++                    );
+ 
+                     UsernamePasswordAuthenticationToken authenticationToken =
+                             new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+@@ -52,12 +58,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
+                     SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                 }
+             }
++
+         } catch (Exception ex) {
+             log.warn("Could not set user authentication from JWT: {}", ex.getMessage());
+             SecurityContextHolder.clearContext();
+         }
+ 
+-
+         filterChain.doFilter(request, response);
+     }
+ 
+diff --git a/back/src/main/java/io/github/flashlearn/app/auth/security/JwtTokenProvider.java b/back/src/main/java/io/github/flashlearn/app/auth/security/JwtTokenProvider.java
+index 1d50da8..a8d3e87 100644
+--- a/back/src/main/java/io/github/flashlearn/app/auth/security/JwtTokenProvider.java
++++ b/back/src/main/java/io/github/flashlearn/app/auth/security/JwtTokenProvider.java
+@@ -1,9 +1,14 @@
+ package io.github.flashlearn.app.auth.security;
+ 
++import io.github.flashlearn.app.user.entity.Role;
++import io.github.flashlearn.app.user.entity.User;
++import io.github.flashlearn.app.user.exception.UserNotFoundException;
++import io.github.flashlearn.app.user.repository.UserRepository;
++import io.jsonwebtoken.Claims;
+ import io.jsonwebtoken.JwtException;
+ import io.jsonwebtoken.Jwts;
+-import io.jsonwebtoken.SignatureAlgorithm;
+ import io.jsonwebtoken.security.Keys;
++import lombok.RequiredArgsConstructor;
+ import org.springframework.beans.factory.annotation.Value;
+ import org.springframework.stereotype.Component;
+ 
+@@ -11,6 +16,7 @@ import javax.crypto.SecretKey;
+ import java.util.Date;
+ 
+ @Component
++@RequiredArgsConstructor
+ public class JwtTokenProvider {
+ 
+     @Value("${jwt.secret}")
+@@ -19,47 +25,36 @@ public class JwtTokenProvider {
+     @Value("${jwt.expiration}")
+     private long jwtExpirationMs;
+ 
++
+     private SecretKey getSigningKey() {
+         return Keys.hmacShaKeyFor(jwtSecret.getBytes());
+     }
+ 
+     /**
+      * Генерирует JWT токен для пользователя с указанным именем
+-     * @param username имя пользователя
++     *
++     * @param id идентификатор пользователя
+      * @return JWT токен
+      */
+-    public String generateToken(String username) {
++    public String generateToken(User user) {
+         Date now = new Date();
+         // Вычисляем дату истечения токена: текущее время + время жизни токена
+         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
+-
+         return Jwts.builder()
+-                .subject(username)
++                .subject(user.getUsername())
++                .claim("id", user.getId()) // id is stored in claims
++                .claim("role", user.getRole().name())
+                 .issuedAt(now) // Время создания токена
+                 .expiration(expiryDate) // Время истечения токена
+-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
++                .signWith(getSigningKey(), Jwts.SIG.HS256)
+                 .compact();
+     }
+ 
+-    public String getUsernameFromToken(String token) {
++    public Claims parse(String token) {
+         return Jwts.parser()
+                 .verifyWith(getSigningKey())
+                 .build()
+                 .parseSignedClaims(token)
+-                .getPayload()
+-                .getSubject();
+-    }
+-
+-    public boolean validateToken(String token) {
+-        try {
+-            Jwts.parser()
+-                    .verifyWith(getSigningKey())
+-                    .build()
+-                    .parseSignedClaims(token);
+-
+-            return true;
+-        } catch (JwtException | IllegalArgumentException e) {
+-            return false;
+-        }
++                .getPayload();
+     }
+ }
+diff --git a/back/src/main/java/io/github/flashlearn/app/auth/security/SecurityUtils.java b/back/src/main/java/io/github/flashlearn/app/auth/security/SecurityUtils.java
+index f5df659..0d3dbff 100644
+--- a/back/src/main/java/io/github/flashlearn/app/auth/security/SecurityUtils.java
++++ b/back/src/main/java/io/github/flashlearn/app/auth/security/SecurityUtils.java
+@@ -1,12 +1,12 @@
+ package io.github.flashlearn.app.auth.security;
+ 
++import io.github.flashlearn.app.flashcard.exception.UnauthorizedAccessException;
+ import io.github.flashlearn.app.user.entity.User;
+ import io.github.flashlearn.app.user.exception.UserNotFoundException;
+ import io.github.flashlearn.app.user.repository.UserRepository;
+ import lombok.RequiredArgsConstructor;
+ import org.springframework.security.core.Authentication;
+ import org.springframework.security.core.context.SecurityContextHolder;
+-import org.springframework.security.core.userdetails.UserDetails;
+ import org.springframework.stereotype.Component;
+ 
+ /**
+@@ -20,22 +20,37 @@ public class SecurityUtils {
+ 
+     /**
+      * Получает имя пользователя из SecurityContext
++     *
+      * @return имя текущего аутентифицированного пользователя
+      * @throws IllegalStateException если пользователь не аутентифицирован
+      */
+-    public String getCurrentUsername() {
++    public static Long getCurrentUserId() {
+         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+ 
+-        if (authentication == null || !authentication.isAuthenticated()) {
+-            throw new IllegalStateException("Пользователь не аутентифицирован");
++        if (unauthorized()) {
++            throw new UnauthorizedAccessException("Пользователь не аутентифицирован");
+         }
+ 
+         Object principal = authentication.getPrincipal();
+ 
+-        if (principal instanceof UserDetails) {
+-            return ((UserDetails) principal).getUsername();
+-        } else if (principal instanceof String) {
+-            return (String) principal;
++        if (principal instanceof CustomUserDetails userDetails) {
++            return userDetails.id();
++        } else {
++            throw new IllegalStateException("Неизвестный тип principal: " + principal.getClass());
++        }
++    }
++
++    public static String getCurrentUsername(){
++        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
++
++        if (unauthorized()) {
++            throw new UnauthorizedAccessException("Пользователь не аутентифицирован");
++        }
++
++        Object principal = authentication.getPrincipal();
++
++        if (principal instanceof CustomUserDetails userDetails) {
++            return userDetails.getUsername();
+         } else {
+             throw new IllegalStateException("Неизвестный тип principal: " + principal.getClass());
+         }
+@@ -43,25 +58,32 @@ public class SecurityUtils {
+ 
+     /**
+      * Получает объект User текущего аутентифицированного пользователя из базы данных
++     *
+      * @return объект User текущего пользователя
+      * @throws UserNotFoundException если пользователь не найден в базе данных
+      * @throws IllegalStateException если пользователь не аутентифицирован
+      */
+     public User getCurrentUser() {
+-        String username = getCurrentUsername();
+-        return userRepository.findByUsername(username)
+-                .orElseThrow(() -> new UserNotFoundException("Пользователь не найден: " + username));
++        Long userId = getCurrentUserId();
++        return userRepository.findById(userId)
++                .orElseThrow(() -> new UserNotFoundException(userId));
++    }
++
++    public User getCurrentUserRef(){
++        Long userId = getCurrentUserId();
++        return userRepository.getReferenceById(userId);
+     }
+ 
+     /**
+      * Проверяет, является ли текущий пользователь владельцем указанного ресурса
+-     * @param resourceOwnerUsername имя пользователя-владельца ресурса
++     *
++     * @param userId имя пользователя-владельца ресурса
+      * @return true, если текущий пользователь является владельцем
+      */
+-    public boolean isCurrentUser(String resourceOwnerUsername) {
++    public static boolean isCurrentUser(Long userId) {
+         try {
+-            String currentUsername = getCurrentUsername();
+-            return currentUsername.equals(resourceOwnerUsername);
++            Long currentUserId = getCurrentUserId();
++            return currentUserId.equals(userId);
+         } catch (IllegalStateException e) {
+             return false;
+         }
+@@ -69,12 +91,13 @@ public class SecurityUtils {
+ 
+     /**
+      * Проверяет, аутентифицирован ли текущий пользователь
++     *
+      * @return true, если пользователь аутентифицирован
+      */
+-    public boolean isAuthenticated() {
++    public static boolean unauthorized() {
+         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+-        return authentication != null && authentication.isAuthenticated() 
+-                && !"anonymousUser".equals(authentication.getPrincipal());
++        return authentication == null || !authentication.isAuthenticated()
++                || "anonymousUser".equals(authentication.getPrincipal());
+     }
+ }
+ 
+diff --git a/back/src/main/java/io/github/flashlearn/app/auth/service/AuthService.java b/back/src/main/java/io/github/flashlearn/app/auth/service/AuthService.java
+index 28a79fa..9b64a6e 100644
+--- a/back/src/main/java/io/github/flashlearn/app/auth/service/AuthService.java
++++ b/back/src/main/java/io/github/flashlearn/app/auth/service/AuthService.java
+@@ -1,14 +1,12 @@
+ package io.github.flashlearn.app.auth.service;
+ 
+ import io.github.flashlearn.app.auth.dto.UserLoginRequest;
+-import io.github.flashlearn.app.auth.entity.VerificationToken;
+-import io.github.flashlearn.app.auth.exception.TokenExpiredException;
+-import io.github.flashlearn.app.auth.exception.TokenNotFoundException;
+ import io.github.flashlearn.app.auth.repository.VerificationTokenRepository;
++import io.github.flashlearn.app.auth.security.CustomUserDetails;
++import io.github.flashlearn.app.auth.security.JwtTokenProvider;
+ import io.github.flashlearn.app.user.entity.User;
+ import io.github.flashlearn.app.user.exception.UserNotFoundException;
+ import io.github.flashlearn.app.user.repository.UserRepository;
+-import io.github.flashlearn.app.auth.security.JwtTokenProvider;
+ import lombok.RequiredArgsConstructor;
+ import org.springframework.security.authentication.AuthenticationManager;
+ import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+@@ -16,9 +14,6 @@ import org.springframework.security.core.Authentication;
+ import org.springframework.security.core.context.SecurityContextHolder;
+ import org.springframework.stereotype.Service;
+ 
+-import java.time.LocalDateTime;
+-import java.time.ZoneOffset;
+-
+ @Service
+ @RequiredArgsConstructor
+ public class AuthService {
+@@ -31,33 +26,21 @@ public class AuthService {
+     // Service for login attempts
+     public String loginUser(UserLoginRequest request) {
+ 
+-        Authentication authentication = authenticationManager.authenticate(
++        authenticationManager.authenticate(
+                 new UsernamePasswordAuthenticationToken(
+                 request.username(),
+                 request.password()
+             )
+         );
+ 
+-        User user = (User) authentication.getPrincipal();
+-
+-        return tokenProvider.generateToken(user.getUsername());
++        return tokenProvider.generateToken(
++                userRepository.findByUsername(request.username())
++                        .orElseThrow(() -> new UserNotFoundException(request.username())) // fetching user to get id, roles and to check if he is actually in db
++        );
+     }
+ 
+     public User findUserByUsername(String username) {
+         return userRepository.findByUsername(username)
+                 .orElseThrow(() -> new UserNotFoundException("User not found " + username));
+     }
+-
+-    public User getCurrentUser() {
+-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+-
+-        if(auth == null || !auth.isAuthenticated()) {
+-            throw new RuntimeException("User is not authenticated");
+-        }
+-
+-        String username = auth.getName();
+-
+-        return userRepository.findByUsername(username)
+-                .orElseThrow(() -> new UserNotFoundException("User not found: " + username));
+-    }
+ }
+diff --git a/back/src/main/java/io/github/flashlearn/app/auth/service/RegistrationService.java b/back/src/main/java/io/github/flashlearn/app/auth/service/RegistrationService.java
+index 1519b03..e9cb31b 100644
+--- a/back/src/main/java/io/github/flashlearn/app/auth/service/RegistrationService.java
++++ b/back/src/main/java/io/github/flashlearn/app/auth/service/RegistrationService.java
+@@ -5,6 +5,7 @@ import io.github.flashlearn.app.settings.entity.UserSettings;
+ import io.github.flashlearn.app.settings.repository.UserSettingsRepository;
+ import io.github.flashlearn.app.user.entity.Role;
+ import io.github.flashlearn.app.user.entity.User;
++import io.github.flashlearn.app.user.exception.EmailIsTakenException;
+ import io.github.flashlearn.app.user.exception.UserAlreadyExistsException;
+ import io.github.flashlearn.app.user.repository.UserRepository;
+ import io.github.flashlearn.app.user_stats.entity.UserStats;
+@@ -28,13 +29,18 @@ public class RegistrationService {
+     // Service for registration attempts
+     public User registerUser(UserRegistrationRequest request) {
+         String username = request.username();
+-        String encodedPassword = passwordEncoder.encode(request.password());
+         String email = request.email();
+ 
+-        if(userRepository.existsByUsername(username)) {
+-            throw new UserAlreadyExistsException("User already exists");
++        if (userRepository.existsByUsername(username)) { // all exceptions should be thrown as fast as possible
++            throw new UserAlreadyExistsException(username);
++        }
++
++        if (userRepository.existsByEmail(email)) {
++            throw new EmailIsTakenException(email);
+         }
+ 
++        String encodedPassword = passwordEncoder.encode(request.password());
++
+         User user = new User(username, encodedPassword, email, Role.USER);
+         userRepository.save(user);
+ 
+diff --git a/back/src/main/java/io/github/flashlearn/app/common/exception/GlobalExceptionHandler.java b/back/src/main/java/io/github/flashlearn/app/common/exception/GlobalExceptionHandler.java
+index d2d0166..7f148bc 100644
+--- a/back/src/main/java/io/github/flashlearn/app/common/exception/GlobalExceptionHandler.java
++++ b/back/src/main/java/io/github/flashlearn/app/common/exception/GlobalExceptionHandler.java
+@@ -1,19 +1,19 @@
+ package io.github.flashlearn.app.common.exception;
+ 
+ import io.github.flashlearn.app.auth.exception.EmailSendingException;
+-import io.github.flashlearn.app.auth.exception.InvalidCredentialsException;
+ import io.github.flashlearn.app.auth.exception.TokenExpiredException;
+ import io.github.flashlearn.app.auth.exception.TokenNotFoundException;
+ import io.github.flashlearn.app.common.dto.ApiError;
+-import io.github.flashlearn.app.friendship.exception.FiendshipRequestNotFoundException;
+-import io.github.flashlearn.app.friendship.exception.Forbidden;
+-import io.github.flashlearn.app.friendship.exception.FriendshipAlreadyExistsException;
+ import io.github.flashlearn.app.flashcard.exception.FlashCardAlreadyExistsException;
+ import io.github.flashlearn.app.flashcard.exception.FlashCardNotFoundException;
+ import io.github.flashlearn.app.flashcard.exception.FlashCardSetNotFoundException;
+ import io.github.flashlearn.app.flashcard.exception.UnauthorizedAccessException;
++import io.github.flashlearn.app.friendship.exception.FiendshipRequestNotFoundException;
++import io.github.flashlearn.app.friendship.exception.Forbidden;
++import io.github.flashlearn.app.friendship.exception.FriendshipAlreadyExistsException;
+ import io.github.flashlearn.app.profile.exception.AvatarUploadException;
+ import io.github.flashlearn.app.settings.exception.UserSettingsNotFoundException;
++import io.github.flashlearn.app.user.exception.EmailIsTakenException;
+ import io.github.flashlearn.app.user.exception.UserAlreadyExistsException;
+ import io.github.flashlearn.app.user.exception.UserNotFoundException;
+ import io.micrometer.tracing.Tracer;
+@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.http.HttpStatus;
+ import org.springframework.http.ResponseEntity;
+ import org.springframework.security.access.AccessDeniedException;
++import org.springframework.security.authentication.BadCredentialsException;
+ import org.springframework.web.bind.annotation.ExceptionHandler;
+ import org.springframework.web.bind.annotation.RestControllerAdvice;
+ 
+@@ -46,14 +47,14 @@ public class GlobalExceptionHandler{
+ 
+         log.warn("Registration attempt failed - user exists: {}", ex.getUsername());
+ 
+-        ApiError body = new ApiError(HttpStatus.BAD_REQUEST.value(), "USER_EXISTS", ex.getMessage(),
++        ApiError body = new ApiError(HttpStatus.CONFLICT.value(), "USER_EXISTS", ex.getMessage(), // 400 - unreadable data, 409 - illegal state
+                                     Instant.now(), request.getRequestURI(), traceId);
+-        return ResponseEntity.badRequest().body(body);
++        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+     }
+ 
+     // Invalid password
+-    @ExceptionHandler(InvalidCredentialsException.class)
+-    public ResponseEntity<ApiError> invalidCredentialsExceptionHandler(InvalidCredentialsException ex,
++    @ExceptionHandler(BadCredentialsException.class)
++    public ResponseEntity<ApiError> invalidCredentialsExceptionHandler(BadCredentialsException ex,
+                                                                        HttpServletRequest request) {
+         String traceId = tracer.currentSpan() != null
+                 ? tracer.currentSpan().context().traceId()
+@@ -61,9 +62,9 @@ public class GlobalExceptionHandler{
+ 
+         log.info("Login attempt failed - wrong password");
+ 
+-        ApiError body = new ApiError(HttpStatus.FORBIDDEN.value(), "WRONG_PASSWORD", ex.getMessage(),
++        ApiError body = new ApiError(HttpStatus.UNAUTHORIZED.value(), "WRONG_PASSWORD", ex.getMessage(), // 403 - authorized, no access; 401 - unauthorized
+                                     Instant.now(), request.getRequestURI(), traceId);
+-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
++        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
+     }
+ 
+     // FlashCard already exists
+@@ -104,13 +105,28 @@ public class GlobalExceptionHandler{
+                 ? tracer.currentSpan().context().traceId()
+                 : "N/A";
+ 
+-        log.error("User not found in database: {}", ex.getUsername());
++        log.error(ex.getMessage());
+ 
+         ApiError body = new ApiError(HttpStatus.NOT_FOUND.value(), "USER_NOT_FOUND", ex.getMessage(),
+                                     Instant.now(), request.getRequestURI(), traceId);
+         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+     }
+ 
++    // Email is taken by another user
++    @ExceptionHandler(EmailIsTakenException.class)
++    public ResponseEntity<ApiError> emailIsTakenExceptionHandler(EmailIsTakenException ex,
++                                                                 HttpServletRequest request) {
++        String traceId = tracer.currentSpan() != null
++                ? tracer.currentSpan().context().traceId()
++                : "N/A";
++
++        log.error(ex.getMessage());
++
++        ApiError body = new ApiError(HttpStatus.CONFLICT.value(), "EMAIL_IS_TAKEN", ex.getMessage(),
++                Instant.now(), request.getRequestURI(), traceId);
++        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
++    }
++
+     // Unauthorized access attempt - пользователь пытается получить доступ к ресурсу, к которому у него нет прав
+     @ExceptionHandler(UnauthorizedAccessException.class)
+     public ResponseEntity<ApiError> unauthorizedAccessExceptionHandler(UnauthorizedAccessException ex,
+@@ -283,9 +299,9 @@ public class GlobalExceptionHandler{
+ 
+         log.error("Can not upload avatar: {}", ex.getMessage(), ex);
+ 
+-        ApiError body = new ApiError(HttpStatus.FORBIDDEN.value(), "AVATAR_NOT_UPLOADED", ex.getMessage(),
++        ApiError body = new ApiError(HttpStatus.INTERNAL_SERVER_ERROR.value(), "AVATAR_NOT_UPLOADED", ex.getMessage(),
+                 Instant.now(), request.getRequestURI(), traceId);
+-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
++        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
+     }
+ 
+     // Unexpected exception
+@@ -296,7 +312,7 @@ public class GlobalExceptionHandler{
+                 ? tracer.currentSpan().context().traceId()
+                 : "N/A";
+ 
+-        log.error("Unexpected exception");
++        log.error("Unexpected exception: {}", ex.getClass().getSimpleName());
+ 
+         ApiError body = new ApiError(HttpStatus.INTERNAL_SERVER_ERROR.value(), "INTERNAL_SERVER_ERROR", ex.getMessage(),
+                                     Instant.now(), request.getRequestURI(), traceId);
+diff --git a/back/src/main/java/io/github/flashlearn/app/flashcard/controller/FlashCardController.java b/back/src/main/java/io/github/flashlearn/app/flashcard/controller/FlashCardController.java
+index d527e69..2dc00b4 100644
+--- a/back/src/main/java/io/github/flashlearn/app/flashcard/controller/FlashCardController.java
++++ b/back/src/main/java/io/github/flashlearn/app/flashcard/controller/FlashCardController.java
+@@ -26,7 +26,6 @@ public class FlashCardController {
+      * Карточка автоматически привязывается к текущему пользователю.
+      */
+     @PostMapping("/create")
+-    @PreAuthorize("isAuthenticated()") // Проверяем, что пользователь аутентифицирован
+     public ResponseEntity<FlashCardSetResponse> createFlashCardSet(@Valid @RequestBody CreateFlashCardSetRequest request) {
+         FlashCardSet createdSet = flashCardService.createFlashCardSet(request);
+         return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toFlashCardSetResponse(createdSet));
+@@ -35,13 +34,23 @@ public class FlashCardController {
+     /**
+      * Получение всех флешкарт текущего пользователя. Требуется аутентификация.
+      * Пользователь получает только свои карточки.
+-     * @param username идентификатор пользователя (используется для проверки, что пользователь запрашивает свои карточки)
+      */
+-    @GetMapping("/{username}")
+-    @PreAuthorize("isAuthenticated()") // Проверяем, что пользователь аутентифицирован
+-    public ResponseEntity<List<FlashCardSetResponse>> getAllFlashCards(@PathVariable String username) {
++    @GetMapping
++    public ResponseEntity<List<FlashCardSetResponse>> getAllFlashCards() { // доступ по id оставить для админа
+         // Сервис проверяет, что userId соответствует текущему аутентифицированному пользователю
+-        List<FlashCardSetResponse> flashCards = flashCardService.getAllFlashCardSets(username)
++        List<FlashCardSetResponse> flashCards = flashCardService.getAllFlashCardSets()
++                .stream()
++                .map(mapper::toFlashCardSetResponse)
++                .toList();
++
++        return ResponseEntity.ok(flashCards);
++    }
++
++    @GetMapping("/user/{id}")
++//    @PreAuthorize("hasRole('ADMIN')")
++    public ResponseEntity<List<FlashCardSetResponse>> getAllFlashCards(Long id) {
++        // Сервис проверяет, что userId соответствует текущему аутентифицированному пользователю
++        List<FlashCardSetResponse> flashCards = flashCardService.getAllFlashCardSets(id)
+                 .stream()
+                 .map(mapper::toFlashCardSetResponse)
+                 .toList();
+@@ -50,31 +59,28 @@ public class FlashCardController {
+     }
+ 
+     @GetMapping("/getSet/{id}")
+-    @PreAuthorize("isAuthenticated()")
+     public ResponseEntity<FlashCardSetResponse> getFlashCardSet(@PathVariable Long id) {
+         FlashCardSetResponse flashCardSetResponse = mapper.toFlashCardSetResponse(flashCardService.getFlashCardSet(id));
+         return ResponseEntity.status(HttpStatus.OK).body(flashCardSetResponse);
+     }
+ 
+     @DeleteMapping("/delete/{id}")
+-    @PreAuthorize("isAuthenticated()")
+     public ResponseEntity<Void> deleteFlashCardSet(@PathVariable Long id) {
+         flashCardService.deleteFlashCardSet(id);
+         return ResponseEntity.noContent().build();
+     }
+ 
+     @PutMapping("/edit/{id}")
+-    @PreAuthorize("isAuthenticated()")
+-    public ResponseEntity<FlashCardSetResponse> editFlashCardSet(@RequestBody @Valid EditFlashCardSetRequest request,
++    public ResponseEntity<FlashCardSetResponse> editFlashCardSet(@RequestBody EditFlashCardSetRequest request, // removed valid, cuz no fields are mapped with constraint annotations
+                                                                  @PathVariable Long id) {
+         FlashCardSet flashCardSet = flashCardService.editFlashCardSet(mapper.toFlashCardSet(request), id);
+         return ResponseEntity.status(HttpStatus.OK).body(mapper.toFlashCardSetResponse(flashCardSet));
+     }
+ 
+     @PostMapping("/save/{id}")
+-    @PreAuthorize("isAuthenticated()")
+     public ResponseEntity<SaveFlashCardSetResponse> saveFlashCardSet(@PathVariable Long id,
+                                                                      @RequestBody SaveFlashCardSetRequest request) {
++        // TODO edit contract
+         SaveFlashCardSetResponse response = mapper.toSaveFlashCardSetResponse(flashCardService.saveFlashCardSet(id, request));
+         return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
+     }
+diff --git a/back/src/main/java/io/github/flashlearn/app/flashcard/dto/CreateFlashCardSetRequest.java b/back/src/main/java/io/github/flashlearn/app/flashcard/dto/CreateFlashCardSetRequest.java
+index 9bd1b5f..fc22362 100644
+--- a/back/src/main/java/io/github/flashlearn/app/flashcard/dto/CreateFlashCardSetRequest.java
++++ b/back/src/main/java/io/github/flashlearn/app/flashcard/dto/CreateFlashCardSetRequest.java
+@@ -1,13 +1,16 @@
+ package io.github.flashlearn.app.flashcard.dto;
+ 
+ import io.github.flashlearn.app.flashcard.entity.Visibility;
++import jakarta.validation.constraints.NotBlank;
++import jakarta.validation.constraints.NotEmpty;
++import jakarta.validation.constraints.NotNull;
+ 
+ import java.util.List;
+ 
+ public record CreateFlashCardSetRequest(
+-        String title,
+-        String description,
+-        Visibility visibility,
+-        List<String> tags,
+-        List<CreateFlashCardRequest> flashCards
++        @NotBlank String title,
++        @NotBlank String description,
++        @NotNull Visibility visibility,
++        @NotEmpty List<String> tags,
++        @NotEmpty List<CreateFlashCardRequest> flashCards
+ ) { }
+diff --git a/back/src/main/java/io/github/flashlearn/app/flashcard/entity/FlashCard.java b/back/src/main/java/io/github/flashlearn/app/flashcard/entity/FlashCard.java
+index 1ef094b..e49e744 100644
+--- a/back/src/main/java/io/github/flashlearn/app/flashcard/entity/FlashCard.java
++++ b/back/src/main/java/io/github/flashlearn/app/flashcard/entity/FlashCard.java
+@@ -1,11 +1,8 @@
+ package io.github.flashlearn.app.flashcard.entity;
+ 
+-import io.github.flashlearn.app.user.entity.User;
+ import jakarta.persistence.*;
+ import lombok.Data;
+ 
+-import java.time.LocalDateTime;
+-
+ @Entity
+ @Data
+ @Table(name = "flashcards")
+diff --git a/back/src/main/java/io/github/flashlearn/app/flashcard/repository/FlashCardRepository.java b/back/src/main/java/io/github/flashlearn/app/flashcard/repository/FlashCardRepository.java
+index 34ecef4..1c73d26 100644
+--- a/back/src/main/java/io/github/flashlearn/app/flashcard/repository/FlashCardRepository.java
++++ b/back/src/main/java/io/github/flashlearn/app/flashcard/repository/FlashCardRepository.java
+@@ -1,10 +1,7 @@
+ package io.github.flashlearn.app.flashcard.repository;
+ 
+ import io.github.flashlearn.app.flashcard.entity.FlashCard;
+-import io.github.flashlearn.app.user.entity.User;
+ import org.springframework.data.jpa.repository.JpaRepository;
+ 
+-import java.util.List;
+-
+ public interface FlashCardRepository extends JpaRepository<FlashCard, Long> {
+ }
+diff --git a/back/src/main/java/io/github/flashlearn/app/flashcard/repository/FlashCardSetRepository.java b/back/src/main/java/io/github/flashlearn/app/flashcard/repository/FlashCardSetRepository.java
+index 3d9e6f0..1b55222 100644
+--- a/back/src/main/java/io/github/flashlearn/app/flashcard/repository/FlashCardSetRepository.java
++++ b/back/src/main/java/io/github/flashlearn/app/flashcard/repository/FlashCardSetRepository.java
+@@ -1,12 +1,10 @@
+ package io.github.flashlearn.app.flashcard.repository;
+ 
+ import io.github.flashlearn.app.flashcard.entity.FlashCardSet;
+-import io.github.flashlearn.app.user.entity.User;
+ import org.springframework.data.jpa.repository.JpaRepository;
+ 
+ import java.util.List;
+-import java.util.Optional;
+ 
+ public interface FlashCardSetRepository extends JpaRepository<FlashCardSet, Long> {
+-    List<FlashCardSet> findAllByOwner(User owner);
++    List<FlashCardSet> findAllByOwner_Id(Long ownerId);
+ }
+diff --git a/back/src/main/java/io/github/flashlearn/app/flashcard/service/FlashCardService.java b/back/src/main/java/io/github/flashlearn/app/flashcard/service/FlashCardService.java
+index f079187..489b66c 100644
+--- a/back/src/main/java/io/github/flashlearn/app/flashcard/service/FlashCardService.java
++++ b/back/src/main/java/io/github/flashlearn/app/flashcard/service/FlashCardService.java
+@@ -2,18 +2,14 @@ package io.github.flashlearn.app.flashcard.service;
+ 
+ import io.github.flashlearn.app.auth.security.SecurityUtils;
+ import io.github.flashlearn.app.flashcard.dto.CreateFlashCardSetRequest;
+-import io.github.flashlearn.app.flashcard.dto.FlashCardResponse;
+ import io.github.flashlearn.app.flashcard.dto.SaveFlashCardSetRequest;
+ import io.github.flashlearn.app.flashcard.entity.FlashCard;
+ import io.github.flashlearn.app.flashcard.entity.FlashCardSet;
+ import io.github.flashlearn.app.flashcard.exception.FlashCardSetNotFoundException;
+ import io.github.flashlearn.app.flashcard.repository.FlashCardSetRepository;
+ import io.github.flashlearn.app.user.entity.User;
+-import io.github.flashlearn.app.flashcard.exception.UnauthorizedAccessException;
+-import io.github.flashlearn.app.flashcard.repository.FlashCardRepository;
+ import jakarta.transaction.Transactional;
+ import lombok.RequiredArgsConstructor;
+-import org.springframework.boot.web.embedded.netty.NettyWebServer;
+ import org.springframework.stereotype.Service;
+ 
+ import java.time.LocalDateTime;
+@@ -28,13 +24,14 @@ public class FlashCardService {
+ 
+     /**
+      * Создает новую флешкарту для текущего аутентифицированного пользователя
++     *
+      * @param request данные для создания карточки
+      * @return созданная флешкарта
+      */
+     @Transactional
+     public FlashCardSet createFlashCardSet(CreateFlashCardSetRequest request) {
+         // Получаем текущего аутентифицированного пользователя
+-        User currentUser = securityUtils.getCurrentUser();
++        User currentUser = securityUtils.getCurrentUserRef();
+         FlashCardSet flashCardSet = new FlashCardSet();
+ 
+         flashCardSet.setTitle(request.title());
+@@ -63,39 +60,47 @@ public class FlashCardService {
+ 
+     /**
+      * Получает все флешкарты пользователя. Пользователь может получить только свои карточки.
+-     * @param username идентификатор пользователя
+-     * @return список флешкарт пользователя
+-     * @throws UnauthorizedAccessException если пользователь пытается получить карточки другого пользователя
++     *
++     * @return список флешкарт авторизованного в данный момент пользователя
+      */
+-    public List<FlashCardSet> getAllFlashCardSets(String username) {
+-        // Получаем текущего аутентифицированного пользователя
+-        User currentUser = securityUtils.getCurrentUser();
+-
++    public List<FlashCardSet> getAllFlashCardSets() {
+         // Проверяем, что пользователь запрашивает свои собственные карточки
+-        if (!currentUser.getUsername().equals(username)) {
+-            throw new UnauthorizedAccessException("У вас нет прав для просмотра карточек другого пользователя");
++        return flashCardSetRepository.findAllByOwner_Id(SecurityUtils.getCurrentUserId());
+     }
+ 
+-        return flashCardSetRepository.findAllByOwner(currentUser);
++    // В КОНТРОЛЕРЕ МЕТОД ДОЛЖЕН БЫТЬ ПОМЕЧЕН @Preauthorize("hasRole('ADMIN'))
++    public List<FlashCardSet> getAllFlashCardSets(Long userId) {
++        return flashCardSetRepository.findAllByOwner_Id(userId);
+     }
+ 
+     @Transactional
+     public void deleteFlashCardSet(Long id) {
+-        flashCardSetRepository.delete(flashCardSetRepository.findById(id)
+-                .orElseThrow(() -> new FlashCardSetNotFoundException("Flashcard set not found")));
++        flashCardSetRepository.deleteById(id);
+     }
+ 
+     @Transactional
+     public FlashCardSet editFlashCardSet(FlashCardSet newFlashCardSet, Long id) {
+         FlashCardSet flashCardSet = flashCardSetRepository.findById(id)
+                 .orElseThrow(() -> new FlashCardSetNotFoundException("Flashcard set not found"));
+-
++        boolean updated = false;
++        if (newFlashCardSet.getTitle() != null && !newFlashCardSet.getTitle().isBlank()) {
+             flashCardSet.setTitle(newFlashCardSet.getTitle());
++            updated = true;
++        }
++        if (newFlashCardSet.getDescription() != null && !newFlashCardSet.getDescription().isBlank()) {
+             flashCardSet.setDescription(newFlashCardSet.getDescription());
++            updated = true;
++        }
++        if (newFlashCardSet.getVisibility() != null) {
+             flashCardSet.setVisibility(newFlashCardSet.getVisibility());
++            updated = true;
++        }
++        if (newFlashCardSet.getTags() != null && !newFlashCardSet.getTags().isEmpty()) {
+             flashCardSet.setTags(newFlashCardSet.getTags());
+-        flashCardSet.setUpdatedAt(LocalDateTime.now());
++            updated = true;
++        }
+ 
++        if (newFlashCardSet.getFlashCards() != null && !newFlashCardSet.getFlashCards().isEmpty()) {
+             flashCardSet.getFlashCards().clear();
+ 
+             for (FlashCard incomingCard : newFlashCardSet.getFlashCards()) {
+@@ -106,6 +111,10 @@ public class FlashCardService {
+ 
+                 flashCardSet.getFlashCards().add(flashCard);
+             }
++        }
++
++        if (updated)
++            flashCardSet.setUpdatedAt(LocalDateTime.now());
+ 
+         return flashCardSetRepository.save(flashCardSet);
+     }
+diff --git a/back/src/main/java/io/github/flashlearn/app/friendship/controller/FriendshipController.java b/back/src/main/java/io/github/flashlearn/app/friendship/controller/FriendshipController.java
+index 658aa40..c452a17 100644
+--- a/back/src/main/java/io/github/flashlearn/app/friendship/controller/FriendshipController.java
++++ b/back/src/main/java/io/github/flashlearn/app/friendship/controller/FriendshipController.java
+@@ -1,20 +1,16 @@
+ package io.github.flashlearn.app.friendship.controller;
+ 
+-import io.github.flashlearn.app.friendship.dto.AcceptFriendRequestDto;
+-import io.github.flashlearn.app.friendship.dto.SendFriendRequestDto;
+-import io.github.flashlearn.app.friendship.dto.FriendRequestResponseDto;
+-import io.github.flashlearn.app.friendship.dto.FriendRequestNotificationDto;
+-import io.github.flashlearn.app.friendship.dto.UserSearchResponseDto;
++import io.github.flashlearn.app.friendship.dto.*;
+ import io.github.flashlearn.app.friendship.mapper.FriendshipMapper;
+ import io.github.flashlearn.app.friendship.service.FriendshipService;
+ import jakarta.validation.Valid;
+ import lombok.RequiredArgsConstructor;
+ import org.springframework.http.HttpStatus;
+ import org.springframework.http.ResponseEntity;
+-import org.springframework.security.access.prepost.PreAuthorize;
+ import org.springframework.web.bind.annotation.*;
+ 
+ import java.util.List;
++import java.util.Set;
+ 
+ @RestController
+ @RequestMapping("/api/friendship")
+@@ -24,7 +20,6 @@ public class FriendshipController {
+     private final FriendshipService friendshipService;
+     private final FriendshipMapper mapper;
+ 
+-    @PreAuthorize("isAuthenticated()")
+     @PostMapping("/send")
+     public ResponseEntity<FriendRequestResponseDto> sendRequest(
+             @RequestBody @Valid SendFriendRequestDto request) {
+@@ -34,7 +29,6 @@ public class FriendshipController {
+         return ResponseEntity.status(HttpStatus.OK).body(response);
+     }
+ 
+-    @PreAuthorize("isAuthenticated()")
+     @PutMapping("/accept")
+     public ResponseEntity<FriendRequestResponseDto> acceptRequest(
+             @RequestBody @Valid AcceptFriendRequestDto request) {
+@@ -44,7 +38,6 @@ public class FriendshipController {
+         return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
+     }
+ 
+-    @PreAuthorize("isAuthenticated()")
+     @PutMapping("/decline")
+     public ResponseEntity<FriendRequestResponseDto> declineRequest(
+             @RequestBody @Valid AcceptFriendRequestDto request) {
+@@ -54,19 +47,16 @@ public class FriendshipController {
+         return ResponseEntity.status(HttpStatus.OK).body(response);
+     }
+ 
+-    @PreAuthorize("isAuthenticated()")
+     @GetMapping("/requests")
+     public ResponseEntity<List<FriendRequestNotificationDto>> incomingRequests() {
+         return ResponseEntity.ok(friendshipService.getIncomingRequests());
+     }
+ 
+-    @PreAuthorize("isAuthenticated()")
+     @GetMapping("/friends")
+-    public ResponseEntity<List<String>> friends() {
++    public ResponseEntity<Set<String>> friends() {
+         return ResponseEntity.ok(friendshipService.getFriends());
+     }
+ 
+-    @PreAuthorize("isAuthenticated()")
+     @GetMapping("/search")
+     public ResponseEntity<List<UserSearchResponseDto>> searchUsers(@RequestParam("query") String query) {
+         return ResponseEntity.ok(friendshipService.searchUsers(query));
+diff --git a/back/src/main/java/io/github/flashlearn/app/friendship/dto/UserSearchResponseDto.java b/back/src/main/java/io/github/flashlearn/app/friendship/dto/UserSearchResponseDto.java
+index 9437941..20db1f8 100644
+--- a/back/src/main/java/io/github/flashlearn/app/friendship/dto/UserSearchResponseDto.java
++++ b/back/src/main/java/io/github/flashlearn/app/friendship/dto/UserSearchResponseDto.java
+@@ -1,6 +1,7 @@
+ package io.github.flashlearn.app.friendship.dto;
+ 
+ public record UserSearchResponseDto(
++        Long id,
+         String username
+ ) { }
+ 
+diff --git a/back/src/main/java/io/github/flashlearn/app/friendship/repository/FriendshipRepository.java b/back/src/main/java/io/github/flashlearn/app/friendship/repository/FriendshipRepository.java
+index b4d861a..7cd3cc8 100644
+--- a/back/src/main/java/io/github/flashlearn/app/friendship/repository/FriendshipRepository.java
++++ b/back/src/main/java/io/github/flashlearn/app/friendship/repository/FriendshipRepository.java
+@@ -2,12 +2,14 @@ package io.github.flashlearn.app.friendship.repository;
+ 
+ import io.github.flashlearn.app.friendship.entity.Friendship;
+ import io.github.flashlearn.app.user.entity.User;
++import org.springframework.data.jpa.repository.EntityGraph;
+ import org.springframework.data.jpa.repository.JpaRepository;
+ import org.springframework.data.jpa.repository.Query;
+ import org.springframework.data.repository.query.Param;
+ 
+ import java.util.List;
+ import java.util.Optional;
++import java.util.Set;
+ 
+ public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
+ 
+@@ -16,4 +18,16 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
+ 
+     @Query("select f from Friendship f where (f.requester = :user or f.receiver = :user) and f.status = 'ACCEPTED'")
+     List<Friendship> findAcceptedForUser(@Param("user") User user);
++
++    @Query("SELECT f FROM Friendship f WHERE f.receiver = :user AND f.status = 'PENDING'")
++    @EntityGraph(attributePaths = {"requester"})
++    List<Friendship> findIncomingForUser(@Param("user") User user); // TODO replace entity with projection
++
++    @Query("SELECT f.receiver FROM Friendship f WHERE f.requester = :user and f.status = 'ACCEPTED'")
++    @EntityGraph(attributePaths = {"receiver"})
++    Set<User> findAcceptedFriendsSentBy(User user); // TODO replace entity with projection
++
++    @Query("SELECT f.requester FROM Friendship f WHERE f.receiver = :user and f.status = 'ACCEPTED'")
++    @EntityGraph(attributePaths = {"requester"})
++    Set<User> findAcceptedFriendsReceivedBy(User user); // TODO replace entity with projection
+ }
+diff --git a/back/src/main/java/io/github/flashlearn/app/friendship/service/FriendshipService.java b/back/src/main/java/io/github/flashlearn/app/friendship/service/FriendshipService.java
+index fc41d54..5377328 100644
+--- a/back/src/main/java/io/github/flashlearn/app/friendship/service/FriendshipService.java
++++ b/back/src/main/java/io/github/flashlearn/app/friendship/service/FriendshipService.java
+@@ -1,13 +1,14 @@
+ package io.github.flashlearn.app.friendship.service;
+ 
+ import io.github.flashlearn.app.auth.security.SecurityUtils;
++import io.github.flashlearn.app.friendship.dto.FriendRequestNotificationDto;
++import io.github.flashlearn.app.friendship.dto.UserSearchResponseDto;
+ import io.github.flashlearn.app.friendship.entity.Friendship;
+ import io.github.flashlearn.app.friendship.exception.FiendshipRequestNotFoundException;
+ import io.github.flashlearn.app.friendship.exception.Forbidden;
+ import io.github.flashlearn.app.friendship.exception.FriendshipAlreadyExistsException;
+ import io.github.flashlearn.app.friendship.repository.FriendshipRepository;
+-import io.github.flashlearn.app.friendship.dto.FriendRequestNotificationDto;
+-import io.github.flashlearn.app.friendship.dto.UserSearchResponseDto;
++import io.github.flashlearn.app.profile.dto.UserProfileResponse;
+ import io.github.flashlearn.app.user.entity.User;
+ import io.github.flashlearn.app.user.exception.UserNotFoundException;
+ import io.github.flashlearn.app.user.repository.UserRepository;
+@@ -16,8 +17,11 @@ import lombok.RequiredArgsConstructor;
+ import org.springframework.stereotype.Service;
+ 
+ import java.time.LocalDateTime;
+-import java.util.Optional;
++import java.util.ArrayList;
+ import java.util.List;
++import java.util.Optional;
++import java.util.Set;
++import java.util.stream.Collectors;
+ import java.util.stream.Stream;
+ 
+ import static io.github.flashlearn.app.friendship.entity.FriendshipStatus.*;
+@@ -34,14 +38,14 @@ public class FriendshipService {
+     public Friendship sendFriendshipRequest(String receiverUsername) {
+         User requester = securityUtils.getCurrentUser();
+         User receiver = userRepository.findByUsername(receiverUsername).
+-                orElseThrow(() -> new UserNotFoundException("User not found: " + receiverUsername));
++                orElseThrow(() -> new UserNotFoundException(receiverUsername));
+ 
+         if (requester.getId().equals(receiver.getId())) {
+             throw new Forbidden("Нельзя добавить самого себя в друзья");
+         }
+ 
+         Optional<Friendship> existing = friendshipRepository.findBetween(requester, receiver);
+-
++        // не оч понял как работает
+         if (existing.isPresent()) {
+             Friendship friendship = existing.get();
+             switch (friendship.getStatus()) {
+@@ -54,7 +58,19 @@ public class FriendshipService {
+                     }
+                     throw new FriendshipAlreadyExistsException("Заявка уже отправлена");
+                 }
+-                case DECLINED, BLOCKED -> throw new FriendshipAlreadyExistsException("Дружба заблокирована или отклонена");
++                case DECLINED -> {
++                    friendship.setRequester(requester); // если запрос был отклонен, его можно отправить заново
++                    friendship.setReceiver(receiver);
++                    friendship.setStatus(PENDING);
++                    friendship.setCreatedAt(LocalDateTime.now());
++                    return friendshipRepository.save(friendship);
++                }
++                case BLOCKED -> throw new FriendshipAlreadyExistsException("Пользователь заблокирован");
++                // TODO fetch blocked requests and unblock them
++                /* блок - не состояние дружбы, а санкции к пользователю (запрет функционала).
++                 * пока из затрагиваемых функций только отправка дружбы, но в будущем будет
++                 * правильнее вынести список заблокированных в отдельную сущность (как UserStats)
++                 */
+             }
+         }
+ 
+@@ -68,18 +84,17 @@ public class FriendshipService {
+     }
+ 
+     public Friendship acceptFriendshipRequest(Long requestId) {
+-        User currentUser = securityUtils.getCurrentUser();
+         Friendship friendship = friendshipRepository.findById(requestId)
+                 .orElseThrow(() -> new FiendshipRequestNotFoundException("friendship request not found: " + requestId));
+ 
+-        if (!friendship.getReceiver().getId().equals(currentUser.getId())) {
+-            throw new Forbidden("Нельзя принять чужую заявку");
+-        }
+-
+         if (friendship.getStatus() != PENDING) {
+             throw new FriendshipAlreadyExistsException("Заявка уже обработана");
+         }
+ 
++        if (!friendship.getReceiver().getId().equals(SecurityUtils.getCurrentUserId())) {
++            throw new Forbidden("Нельзя принять чужую заявку");
++        }
++
+         friendship.setStatus(ACCEPTED);
+         return friendshipRepository.save(friendship);
+     }
+@@ -102,25 +117,30 @@ public class FriendshipService {
+     }
+ 
+     public List<FriendRequestNotificationDto> getIncomingRequests() {
+-        User current = securityUtils.getCurrentUser();
+-        return friendshipRepository.findAll().stream()
+-                .filter(f -> f.getReceiver().getId().equals(current.getId()) && f.getStatus() == PENDING)
+-                .map(f -> new FriendRequestNotificationDto(f.getId(), f.getRequester().getUsername(), f.getStatus().name()))
++        User current = securityUtils.getCurrentUserRef();
++        return friendshipRepository.findIncomingForUser(current).stream()
++                .map(f ->
++                        new FriendRequestNotificationDto(
++                                f.getId(),
++                                f.getRequester().getUsername(),
++                                f.getStatus().name()
++                        ) // TODO use mapper
++                )
+                 .toList();
+     }
+ 
+     public List<UserSearchResponseDto> searchUsers(String query) {
+-        User current = securityUtils.getCurrentUser();
+         if (query == null || query.isBlank()) {
+             return List.of();
+         }
+-        return userRepository.findTop5ByUsernameContainingIgnoreCaseAndUsernameNot(query, current.getUsername())
++        return userRepository.findTop5ByUsernameContainingIgnoreCaseAndIdNot(query, SecurityUtils.getCurrentUserId())
+                 .stream()
+-                .map(u -> new UserSearchResponseDto(u.getUsername()))
++                .map(u -> new UserSearchResponseDto(u.getId(), u.getUsername()))
+                 .toList();
+     }
+ 
+-    public List<String> getFriends() {
++    @Deprecated
++    public Set<String> getFriends() {
+         User current = securityUtils.getCurrentUser();
+         return friendshipRepository.findAcceptedForUser(current).stream()
+                 .flatMap(f -> {
+@@ -130,7 +150,36 @@ public class FriendshipService {
+                         return Stream.of(f.getRequester().getUsername());
+                     }
+                 })
+-                .distinct()
+-                .toList();
++                .collect(Collectors.toSet()); // distinct + list = set
++        /* не оч понятно, что делать просто с именами.
++         * только, если опять дергать бэк для каждого имени,
++         * но тогда лучше сразу вернуть всю нужную инфу,
++         * например профили или другие DTO
++         */
++    }
++
++    public List<UserProfileResponse> getFriendsProfiles() {
++        User current = securityUtils.getCurrentUserRef();
++        // TODO use mapper
++        Set<UserProfileResponse> incomingAccepted = friendshipRepository.findAcceptedFriendsReceivedBy(current)
++                .stream().map(u -> new UserProfileResponse(
++                        u.getId(),
++                        u.getUsername(),
++                        u.getAvatarKey(),
++                        u.getAboutMe()
++                )).collect(Collectors.toSet());
++
++        Set<UserProfileResponse> outcomingAccepted = friendshipRepository.findAcceptedFriendsSentBy(current)
++                .stream().map(u -> new UserProfileResponse(
++                        u.getId(),
++                        u.getUsername(),
++                        u.getAvatarKey(),
++                        u.getAboutMe()
++                )).collect(Collectors.toSet());
++
++        List<UserProfileResponse> res = new ArrayList<>(incomingAccepted);
++        res.addAll(outcomingAccepted);
++
++        return res;
+     }
+ }
+diff --git a/back/src/main/java/io/github/flashlearn/app/profile/controller/UserProfileController.java b/back/src/main/java/io/github/flashlearn/app/profile/controller/UserProfileController.java
+index ef9604d..3e807a0 100644
+--- a/back/src/main/java/io/github/flashlearn/app/profile/controller/UserProfileController.java
++++ b/back/src/main/java/io/github/flashlearn/app/profile/controller/UserProfileController.java
+@@ -1,18 +1,15 @@
+ package io.github.flashlearn.app.profile.controller;
+ 
++import io.github.flashlearn.app.auth.mapper.UserAuthMapper;
+ import io.github.flashlearn.app.profile.dto.UpdateUserProfileRequest;
+ import io.github.flashlearn.app.profile.dto.UpdateUserProfileResponse;
+ import io.github.flashlearn.app.profile.dto.UserProfileResponse;
+-import io.github.flashlearn.app.auth.mapper.UserAuthMapper;
+ import io.github.flashlearn.app.profile.service.AvatarUrlService;
+ import io.github.flashlearn.app.profile.service.UserProfileService;
+ import io.github.flashlearn.app.storage.service.AvatarStorageService;
+-import jakarta.mail.Multipart;
+ import lombok.RequiredArgsConstructor;
+ import org.springframework.http.HttpStatus;
+ import org.springframework.http.ResponseEntity;
+-import org.springframework.security.access.prepost.PreAuthorize;
+-import org.springframework.security.core.Authentication;
+ import org.springframework.web.bind.annotation.*;
+ import org.springframework.web.multipart.MultipartFile;
+ 
+@@ -31,7 +28,6 @@ public class UserProfileController {
+      * Любой аутентифицированный пользователь может просматривать профили других пользователей.
+      */
+     @GetMapping("/{username}")
+-    @PreAuthorize("isAuthenticated()") // Проверяем, что пользователь аутентифицирован
+     public ResponseEntity<UserProfileResponse> getProfileInfo(@PathVariable String username) {
+         UserProfileResponse userProfileResponse = mapper.toUserProfileResponse(
+                 userProfileService.findByUsername(username),
+@@ -43,24 +39,19 @@ public class UserProfileController {
+      * Обновление профиля пользователя. Требуется аутентификация.
+      * Пользователь может обновлять только свой собственный профиль (проверка в сервисе).
+      */
+-    @PutMapping("/update/{username}")
+-    @PreAuthorize("isAuthenticated()")
+-    public ResponseEntity<UpdateUserProfileResponse> updateProfile(@PathVariable String username,
+-                                                                   @RequestBody UpdateUserProfileRequest updatedUser) {
++    @PutMapping("/update/{userId}")// redundant parameter, userId is already in security context
++    public ResponseEntity<UpdateUserProfileResponse> updateProfile(@RequestBody UpdateUserProfileRequest updatedUser) {
+         UpdateUserProfileResponse updateUserProfileResponse =
+-                mapper.toUpdateUserProfileResponse(userProfileService.updateProfile(username, updatedUser));
++                mapper.toUpdateUserProfileResponse(userProfileService.updateProfile(updatedUser));
+ 
+         return ResponseEntity.status(HttpStatus.OK).body(updateUserProfileResponse);
+     }
+ 
+     @PostMapping("/avatar")
+-    @PreAuthorize("isAuthenticated()")
+-    public ResponseEntity<?> uploadAvatar(Authentication authentication,
+-                                          @RequestParam("file") MultipartFile file) {
+-        String username = authentication.getName();
++    public ResponseEntity<?> uploadAvatar(@RequestParam("file") MultipartFile file) {
+ 
+-        String avatarKey = avatarStorageService.uploadAvatar(username, file);
+-        userProfileService.uploadAvatar(username, avatarKey);
++        String avatarKey = avatarStorageService.uploadAvatar(file);
++        userProfileService.uploadAvatar(avatarKey);
+ 
+         return ResponseEntity.ok().body(avatarKey);
+     }
+diff --git a/back/src/main/java/io/github/flashlearn/app/profile/service/UserProfileService.java b/back/src/main/java/io/github/flashlearn/app/profile/service/UserProfileService.java
+index 29287f4..c2208fd 100644
+--- a/back/src/main/java/io/github/flashlearn/app/profile/service/UserProfileService.java
++++ b/back/src/main/java/io/github/flashlearn/app/profile/service/UserProfileService.java
+@@ -23,28 +23,19 @@ public class UserProfileService {
+      */
+     public User findByUsername(String username) {
+         return userRepository.findByUsername(username).
+-                orElseThrow(() -> new UserNotFoundException("user not found: " + username));
++                orElseThrow(() -> new UserNotFoundException(username));
+     }
+ 
+     /**
+      * Обновляет профиль пользователя. Пользователь может обновлять только свой собственный профиль.
+-     * @param username имя пользователя, профиль которого нужно обновить
+      * @param updatedUser новые данные профиля
+      * @return обновленный пользователь
+      * @throws UnauthorizedAccessException если пользователь пытается обновить чужой профиль
+      */
+-    public User updateProfile(String username, UpdateUserProfileRequest updatedUser) {
+-        // Получаем текущего аутентифицированного пользователя
+-        User currentUser = securityUtils.getCurrentUser();
++    public User updateProfile(UpdateUserProfileRequest updatedUser) {
+         
+         // Находим пользователя, профиль которого нужно обновить
+-        User user = userRepository.findByUsername(username).
+-                orElseThrow(() -> new UserNotFoundException("can not find user " + username));
+-
+-        // Проверяем, что текущий пользователь обновляет свой собственный профиль
+-        if (!currentUser.getId().equals(user.getId())) {
+-            throw new UnauthorizedAccessException("У вас нет прав для обновления профиля другого пользователя");
+-        }
++        User user = securityUtils.getCurrentUser();
+ 
+         // Обновляем данные профиля
+         user.setUsername(updatedUser.username());
+@@ -53,9 +44,8 @@ public class UserProfileService {
+         return userRepository.save(user);
+     }
+ 
+-    public void uploadAvatar(String username, String avatarKey) {
+-        User user = userRepository.findByUsername(username)
+-                .orElseThrow(() -> new UserNotFoundException("User with username not found: " + username));
++    public void uploadAvatar(String avatarKey) {
++        User user = securityUtils.getCurrentUser();
+ 
+         user.setAvatarKey(avatarKey);
+         userRepository.save(user);
+diff --git a/back/src/main/java/io/github/flashlearn/app/settings/controller/SettingsController.java b/back/src/main/java/io/github/flashlearn/app/settings/controller/SettingsController.java
+index 4eaef55..b8720d8 100644
+--- a/back/src/main/java/io/github/flashlearn/app/settings/controller/SettingsController.java
++++ b/back/src/main/java/io/github/flashlearn/app/settings/controller/SettingsController.java
+@@ -2,7 +2,6 @@ package io.github.flashlearn.app.settings.controller;
+ 
+ import io.github.flashlearn.app.settings.dto.UserSettingsResponse;
+ import io.github.flashlearn.app.settings.dto.UserSettingsUpdateRequest;
+-import io.github.flashlearn.app.settings.entity.UserSettings;
+ import io.github.flashlearn.app.settings.mapper.UserSettingsMapper;
+ import io.github.flashlearn.app.settings.service.SettingsService;
+ import lombok.RequiredArgsConstructor;
+@@ -19,17 +18,16 @@ public class SettingsController {
+     private final UserSettingsMapper userSettingsMapper;
+ 
+     @GetMapping("/{username}")
+-    public ResponseEntity<UserSettingsResponse> getSettings(@PathVariable String username) {
+-        UserSettingsResponse userSettings = userSettingsMapper.toUserSettingsResponse(settingsService.getUserSettings(username));
++    public ResponseEntity<UserSettingsResponse> getSettings() {
++        UserSettingsResponse userSettings = userSettingsMapper.toUserSettingsResponse(settingsService.getUserSettings());
+         return ResponseEntity.ok(userSettings);
+     }
+ 
+     @PutMapping("/update/{username}")
+-    public ResponseEntity<UserSettingsResponse> updateSettings(@PathVariable String username,
+-                                                               @RequestBody UserSettingsUpdateRequest request) {
++    public ResponseEntity<UserSettingsResponse> updateSettings(@RequestBody UserSettingsUpdateRequest request) {
+         UserSettingsResponse response =
+                 userSettingsMapper.toUserSettingsResponse(
+-                        settingsService.updateUserSettings(username, userSettingsMapper.toUserSettings(request)));
++                        settingsService.updateUserSettings(userSettingsMapper.toUserSettings(request)));
+ 
+         return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
+     }
+diff --git a/back/src/main/java/io/github/flashlearn/app/settings/entity/UserSettings.java b/back/src/main/java/io/github/flashlearn/app/settings/entity/UserSettings.java
+index a5608df..9da54b5 100644
+--- a/back/src/main/java/io/github/flashlearn/app/settings/entity/UserSettings.java
++++ b/back/src/main/java/io/github/flashlearn/app/settings/entity/UserSettings.java
+@@ -10,7 +10,6 @@ import lombok.Data;
+ public class UserSettings {
+ 
+     @Id
+-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+     private Long id;
+ 
+     @OneToOne
+diff --git a/back/src/main/java/io/github/flashlearn/app/settings/repository/UserSettingsRepository.java b/back/src/main/java/io/github/flashlearn/app/settings/repository/UserSettingsRepository.java
+index 236be04..4ca7aed 100644
+--- a/back/src/main/java/io/github/flashlearn/app/settings/repository/UserSettingsRepository.java
++++ b/back/src/main/java/io/github/flashlearn/app/settings/repository/UserSettingsRepository.java
+@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
+ import java.util.Optional;
+ 
+ public interface UserSettingsRepository extends JpaRepository<UserSettings, Long> {
+-    Optional<UserSettings> findByUser_Username(String username);
++    Optional<UserSettings> findByUser_Id(Long id);
+ }
+diff --git a/back/src/main/java/io/github/flashlearn/app/settings/service/SettingsService.java b/back/src/main/java/io/github/flashlearn/app/settings/service/SettingsService.java
+index 49b0c11..a425255 100644
+--- a/back/src/main/java/io/github/flashlearn/app/settings/service/SettingsService.java
++++ b/back/src/main/java/io/github/flashlearn/app/settings/service/SettingsService.java
+@@ -1,5 +1,6 @@
+ package io.github.flashlearn.app.settings.service;
+ 
++import io.github.flashlearn.app.auth.security.SecurityUtils;
+ import io.github.flashlearn.app.settings.entity.UserSettings;
+ import io.github.flashlearn.app.settings.exception.UserSettingsNotFoundException;
+ import io.github.flashlearn.app.settings.repository.UserSettingsRepository;
+@@ -12,14 +13,14 @@ public class SettingsService {
+ 
+     private final UserSettingsRepository userSettingsRepository;
+ 
+-    public UserSettings getUserSettings(String username) {
+-        return userSettingsRepository.findByUser_Username(username)
+-                .orElseThrow(() -> new UserSettingsNotFoundException("user with username not found: " + username));
++    public UserSettings getUserSettings() {
++        return userSettingsRepository.findByUser_Id(SecurityUtils.getCurrentUserId())
++                .orElseThrow(() -> new UserSettingsNotFoundException("user with username not found: " + SecurityUtils.getCurrentUsername()));
+     }
+ 
+-    public UserSettings updateUserSettings(String username, UserSettings newUserSettings) {
+-        UserSettings userSettings = userSettingsRepository.findByUser_Username(username)
+-                .orElseThrow(() -> new UserSettingsNotFoundException("user settings not found: " + username));
++    public UserSettings updateUserSettings(UserSettings newUserSettings) {
++        UserSettings userSettings = userSettingsRepository.findByUser_Id(SecurityUtils.getCurrentUserId())
++                .orElseThrow(() -> new UserSettingsNotFoundException("user settings not found: " + SecurityUtils.getCurrentUsername()));
+ 
+         userSettings.setLanguage(newUserSettings.getLanguage());
+         userSettings.setDarkMode(newUserSettings.isDarkMode());
+diff --git a/back/src/main/java/io/github/flashlearn/app/storage/service/AvatarStorageService.java b/back/src/main/java/io/github/flashlearn/app/storage/service/AvatarStorageService.java
+index 265b5cc..b76a47f 100644
+--- a/back/src/main/java/io/github/flashlearn/app/storage/service/AvatarStorageService.java
++++ b/back/src/main/java/io/github/flashlearn/app/storage/service/AvatarStorageService.java
+@@ -1,5 +1,6 @@
+ package io.github.flashlearn.app.storage.service;
+ 
++import io.github.flashlearn.app.auth.security.SecurityUtils;
+ import io.github.flashlearn.app.profile.exception.AvatarUploadException;
+ import lombok.RequiredArgsConstructor;
+ import org.springframework.beans.factory.annotation.Value;
+@@ -21,8 +22,8 @@ public class AvatarStorageService {
+     @Value("${supabase.s3.avatars-bucket}")
+     private String avatarsBucket;
+ 
+-    public String uploadAvatar(String username, MultipartFile file) {
+-        String key = "avatars/" + username + "/" + UUID.randomUUID() + ".jpg";
++    public String uploadAvatar(MultipartFile file) {
++        String key = "avatars/" + SecurityUtils.getCurrentUserId() + "/" + UUID.randomUUID() + ".jpg";
+ 
+         try {
+             s3Client.putObject(
+@@ -34,7 +35,7 @@ public class AvatarStorageService {
+                     RequestBody.fromBytes(file.getBytes())
+             );
+         } catch (IOException e) {
+-            throw new AvatarUploadException("Failed to upload avatar for user: " + username);
++            throw new AvatarUploadException("Failed to upload avatar for user: " + SecurityUtils.getCurrentUsername());
+         }
+ 
+         return key;
+diff --git a/back/src/main/java/io/github/flashlearn/app/user/controller/UserDashboardController.java b/back/src/main/java/io/github/flashlearn/app/user/controller/UserDashboardController.java
+index cd4ca14..13568ab 100644
+--- a/back/src/main/java/io/github/flashlearn/app/user/controller/UserDashboardController.java
++++ b/back/src/main/java/io/github/flashlearn/app/user/controller/UserDashboardController.java
+@@ -10,7 +10,6 @@ import jakarta.validation.Valid;
+ import lombok.RequiredArgsConstructor;
+ import org.springframework.http.HttpStatus;
+ import org.springframework.http.ResponseEntity;
+-import org.springframework.security.access.prepost.PreAuthorize;
+ import org.springframework.web.bind.annotation.*;
+ 
+ @RequestMapping("/api/dashboard")
+@@ -23,27 +22,24 @@ public class UserDashboardController {
+     private final FlashCardSetMapper flashCardSetMapper;
+ 
+     @GetMapping("/{username}")
+-    @PreAuthorize("isAuthenticated()")
+-    public ResponseEntity<UserDashboardResponseDto> getUserInfo(@PathVariable String username) {
+-        UserStats userInfo = userDashboardService.findByUsername(username);
++    public ResponseEntity<UserDashboardResponseDto> getUserInfo() {
++        UserStats userInfo = userDashboardService.loadFreshUserStats();
+         UserDashboardResponseDto userResponse = new UserDashboardResponseDto(
+                 userInfo.getStreak(),
+                 userInfo.getDailyGoal(),
+                 userInfo.getReviewedToday(),
+                 userInfo.isDailyGoalCompleted(),
+-                userDashboardService.getOwnerSets(username).stream()
++                userDashboardService.getOwnerSets().stream()
+                         .map(flashCardSetMapper::toFlashCardSetResponse)
+                         .toList());
+ 
+         return ResponseEntity.status(HttpStatus.OK).body(userResponse);
+     }
+ 
+-    @PutMapping("/update_daily_goal/{username}")
+-    @PreAuthorize("isAuthenticated()")
+-    public ResponseEntity<UserDashboardResponseDto> updateUserDailyGoal(@PathVariable String username,
+-                                                                    @RequestBody @Valid UpdateDailyGoalRequestDto request) {
++    @PutMapping("/update_daily_goal") // redundant parameter, userId is already in security context
++    public ResponseEntity<UserDashboardResponseDto> updateUserDailyGoal(@RequestBody @Valid UpdateDailyGoalRequestDto request) {
+         UserDashboardResponseDto userResponse = userDashboardMapper
+-                .toUserDashboardResponseDto(userDashboardService.updateUserDailyGoal(username, request));
++                .toUserDashboardResponseDto(userDashboardService.updateUserDailyGoal(request));
+         return ResponseEntity.status(HttpStatus.ACCEPTED).body(userResponse);
+     }
+ }
+diff --git a/back/src/main/java/io/github/flashlearn/app/user/entity/User.java b/back/src/main/java/io/github/flashlearn/app/user/entity/User.java
+index 1eee93a..63634df 100644
+--- a/back/src/main/java/io/github/flashlearn/app/user/entity/User.java
++++ b/back/src/main/java/io/github/flashlearn/app/user/entity/User.java
+@@ -4,19 +4,21 @@ import io.github.flashlearn.app.flashcard.entity.FlashCardSet;
+ import io.github.flashlearn.app.settings.entity.UserSettings;
+ import io.github.flashlearn.app.user_stats.entity.UserStats;
+ import jakarta.persistence.*;
+-import lombok.Data;
+-import org.springframework.security.core.GrantedAuthority;
+-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+-import org.springframework.security.core.userdetails.UserDetails;
++import lombok.Getter;
++import lombok.NoArgsConstructor;
++import lombok.Setter;
++import org.hibernate.annotations.Fetch;
++import org.hibernate.annotations.FetchMode;
+ 
+ import java.util.ArrayList;
+-import java.util.Collection;
+ import java.util.List;
+ 
+ @Entity
+ @Table(name = "users")
+-@Data
+-public class User implements UserDetails {
++@Getter
++@Setter
++@NoArgsConstructor
++public class User { // User is no longer instance of UserDetails and belongs only to domain layer (not security)
+ 
+     @Id
+     @GeneratedValue(strategy = GenerationType.IDENTITY)
+@@ -44,7 +46,7 @@ public class User implements UserDetails {
+     private boolean emailVerified = false;
+ 
+     @Enumerated(EnumType.STRING)
+-    private Role role;
++    private Role role; // TODO make CSV string (user can have multiple roles)
+ 
+     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+     private UserSettings userSettings;
+@@ -53,24 +55,13 @@ public class User implements UserDetails {
+     private UserStats userStats;
+ 
+     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
++    @Fetch(FetchMode.SUBSELECT)
+     private List<FlashCardSet> flashCardSets = new ArrayList<>();
+ 
+-    @Override
+-    public Collection<? extends GrantedAuthority> getAuthorities() {
+-        return List.of(new SimpleGrantedAuthority(role.name()));
+-    }
+-
+-    public User(){}
+-
+     public User(String username, String password, String email, Role role) {
+         this.username = username;
+         this.password = password;
+         this.email = email;
+         this.role = role;
+     }
+-
+-    @Override public boolean isAccountNonExpired() { return true; }
+-    @Override public boolean isAccountNonLocked() { return true; }
+-    @Override public boolean isCredentialsNonExpired() { return true; }
+-    @Override public boolean isEnabled() { return true; }
+ }
+diff --git a/back/src/main/java/io/github/flashlearn/app/user/exception/EmailIsTakenException.java b/back/src/main/java/io/github/flashlearn/app/user/exception/EmailIsTakenException.java
+new file mode 100644
+index 0000000..dbaca14
+--- /dev/null
++++ b/back/src/main/java/io/github/flashlearn/app/user/exception/EmailIsTakenException.java
+@@ -0,0 +1,7 @@
++package io.github.flashlearn.app.user.exception;
++
++public class EmailIsTakenException extends RuntimeException {
++    public EmailIsTakenException(String email) {
++        super("Email '" + email + "' has already been taken");
++    }
++}
+diff --git a/back/src/main/java/io/github/flashlearn/app/user/exception/UserAlreadyExistsException.java b/back/src/main/java/io/github/flashlearn/app/user/exception/UserAlreadyExistsException.java
+index a39d789..ae7b5c6 100644
+--- a/back/src/main/java/io/github/flashlearn/app/user/exception/UserAlreadyExistsException.java
++++ b/back/src/main/java/io/github/flashlearn/app/user/exception/UserAlreadyExistsException.java
+@@ -1,5 +1,8 @@
+ package io.github.flashlearn.app.user.exception;
+ 
++import lombok.Getter;
++
++@Getter
+ public class UserAlreadyExistsException extends RuntimeException {
+     private final String username;
+ 
+@@ -8,7 +11,4 @@ public class UserAlreadyExistsException extends RuntimeException {
+         this.username = username;
+     }
+ 
+-    public String getUsername() {
+-        return username;
+-    }
+ }
+diff --git a/back/src/main/java/io/github/flashlearn/app/user/exception/UserNotFoundException.java b/back/src/main/java/io/github/flashlearn/app/user/exception/UserNotFoundException.java
+index 87209ab..34823e3 100644
+--- a/back/src/main/java/io/github/flashlearn/app/user/exception/UserNotFoundException.java
++++ b/back/src/main/java/io/github/flashlearn/app/user/exception/UserNotFoundException.java
+@@ -1,15 +1,20 @@
+ package io.github.flashlearn.app.user.exception;
+ 
+-public class UserNotFoundException extends RuntimeException {
++import lombok.Getter;
++import org.springframework.security.core.userdetails.UsernameNotFoundException;
+ 
+-    private final String username;
++@Getter
++public class UserNotFoundException extends UsernameNotFoundException {
++
++    private final Object key;
+ 
+     public UserNotFoundException(String username) {
+         super("User with username '" + username + "' not found");
+-        this.username = username;
++        this.key = username;
+     }
+ 
+-    public String getUsername() {
+-        return username;
++    public UserNotFoundException(Long id){
++        super("User with id '" + id + "' not found");
++        this.key = id;
+     }
+ }
+diff --git a/back/src/main/java/io/github/flashlearn/app/user/mapper/UserDashboardMapper.java b/back/src/main/java/io/github/flashlearn/app/user/mapper/UserDashboardMapper.java
+index 762fdca..0f4421b 100644
+--- a/back/src/main/java/io/github/flashlearn/app/user/mapper/UserDashboardMapper.java
++++ b/back/src/main/java/io/github/flashlearn/app/user/mapper/UserDashboardMapper.java
+@@ -1,7 +1,6 @@
+ package io.github.flashlearn.app.user.mapper;
+ 
+ import io.github.flashlearn.app.user.dto.UserDashboardResponseDto;
+-import io.github.flashlearn.app.user.entity.User;
+ import io.github.flashlearn.app.user_stats.entity.UserStats;
+ import org.mapstruct.Mapper;
+ 
+diff --git a/back/src/main/java/io/github/flashlearn/app/user/repository/UserRepository.java b/back/src/main/java/io/github/flashlearn/app/user/repository/UserRepository.java
+index 6baaaa4..b3ede33 100644
+--- a/back/src/main/java/io/github/flashlearn/app/user/repository/UserRepository.java
++++ b/back/src/main/java/io/github/flashlearn/app/user/repository/UserRepository.java
+@@ -9,6 +9,9 @@ import java.util.Optional;
+ public interface UserRepository extends JpaRepository<User, Long> {
+     Optional<User> findByUsername(String username);
+     boolean existsByUsername(String username);
++    boolean existsByEmail(String email);
+ 
+-    List<User> findTop5ByUsernameContainingIgnoreCaseAndUsernameNot(String query, String excludeUsername);
++    List<User> findTop5ByUsernameContainingIgnoreCaseAndIdNot(String query, Long id);
++
++    List<User> findTop5ByUsernameContainingIgnoreCase(String query);
+ }
+diff --git a/back/src/main/java/io/github/flashlearn/app/user/service/UserDashboardService.java b/back/src/main/java/io/github/flashlearn/app/user/service/UserDashboardService.java
+index 0d563cc..ff34823 100644
+--- a/back/src/main/java/io/github/flashlearn/app/user/service/UserDashboardService.java
++++ b/back/src/main/java/io/github/flashlearn/app/user/service/UserDashboardService.java
+@@ -2,46 +2,49 @@ package io.github.flashlearn.app.user.service;
+ 
+ import io.github.flashlearn.app.auth.security.SecurityUtils;
+ import io.github.flashlearn.app.flashcard.entity.FlashCardSet;
++import io.github.flashlearn.app.flashcard.service.FlashCardService;
+ import io.github.flashlearn.app.user.dto.UpdateDailyGoalRequestDto;
+-import io.github.flashlearn.app.user_stats.exception.UserStatsNotFoundException;
+ import io.github.flashlearn.app.user_stats.entity.UserStats;
++import io.github.flashlearn.app.user_stats.exception.UserStatsNotFoundException;
+ import io.github.flashlearn.app.user_stats.repository.UserStatsRepository;
+ import lombok.RequiredArgsConstructor;
+-import org.springframework.security.access.AccessDeniedException;
+ import org.springframework.stereotype.Service;
+ 
+-import java.util.List;
+ import java.time.LocalDate;
++import java.util.List;
++
++import static io.github.flashlearn.app.auth.security.SecurityUtils.getCurrentUserId;
+ 
+ @Service
+ @RequiredArgsConstructor
+ public class UserDashboardService {
+ 
+     private final UserStatsRepository userStatsRepository;
+-    private final SecurityUtils securityUtils;
++    private final FlashCardService flashCardService;
+ 
+-    public UserStats findByUsername(String username) {
+-        verifyOwnership(username);
+-        return ensureFresh(loadUserStats(username));
++    public UserStats loadFreshUserStats() {
++        return ensureFresh(
++                loadUserStats(SecurityUtils.getCurrentUserId())
++        );
+     }
+ 
+-    public List<FlashCardSet> getOwnerSets(String username) {
+-        verifyOwnership(username);
+-        return ensureFresh(loadUserStats(username)).getUser().getFlashCardSets();
++    public List<FlashCardSet> getOwnerSets() {
++        return flashCardService.getAllFlashCardSets();
+     }
+ 
+-    public UserStats updateUserDailyGoal(String username, UpdateDailyGoalRequestDto request) {
+-        verifyOwnership(username);
+-
+-        UserStats userStats = ensureFresh(loadUserStats(username));
++    public UserStats updateUserDailyGoal(UpdateDailyGoalRequestDto request) {
++        // redundant parameter, userId is already in security context
++        UserStats userStats = ensureFresh(
++                loadUserStats(getCurrentUserId())
++        );
+ 
+         userStats.setDailyGoal(request.dailyGoal());
+         return userStatsRepository.save(userStats);
+     }
+ 
+-    private UserStats loadUserStats(String username) {
+-        return userStatsRepository.findByUser_Username(username)
+-                .orElseThrow(() -> new UserStatsNotFoundException("User stats not found: " + username));
++    private UserStats loadUserStats(Long userId) {
++        return userStatsRepository.findByUserId(userId)
++                .orElseThrow(() -> new UserStatsNotFoundException(userId));
+     }
+ 
+     private UserStats ensureFresh(UserStats stats) {
+@@ -54,10 +57,4 @@ public class UserDashboardService {
+         }
+         return stats;
+     }
+-
+-    private void verifyOwnership(String username) {
+-        if (!securityUtils.isCurrentUser(username)) {
+-            throw new AccessDeniedException("Нельзя работать с дашбордом другого пользователя");
+-        }
+-    }
+ }
+diff --git a/back/src/main/java/io/github/flashlearn/app/user_stats/controller/UserStatsController.java b/back/src/main/java/io/github/flashlearn/app/user_stats/controller/UserStatsController.java
+index be8ae36..c15914f 100644
+--- a/back/src/main/java/io/github/flashlearn/app/user_stats/controller/UserStatsController.java
++++ b/back/src/main/java/io/github/flashlearn/app/user_stats/controller/UserStatsController.java
+@@ -1,15 +1,10 @@
+ package io.github.flashlearn.app.user_stats.controller;
+ 
+ import io.github.flashlearn.app.auth.service.AuthService;
+-import io.github.flashlearn.app.user.entity.User;
+ import io.github.flashlearn.app.user_stats.service.UserStatsService;
+ import lombok.RequiredArgsConstructor;
+ import org.springframework.http.ResponseEntity;
+-import org.springframework.web.bind.annotation.PostMapping;
+-import org.springframework.web.bind.annotation.RequestBody;
+-import org.springframework.web.bind.annotation.GetMapping;
+-import org.springframework.web.bind.annotation.RequestMapping;
+-import org.springframework.web.bind.annotation.RestController;
++import org.springframework.web.bind.annotation.*;
+ 
+ import java.util.Map;
+ 
+@@ -21,18 +16,16 @@ public class UserStatsController {
+     private final UserStatsService userStatsService;
+     private final AuthService authService;
+ 
+-    @GetMapping("/ping")
++    @GetMapping("/ping") // redundant parameter, userId is already in security context
+     public ResponseEntity<?> ping() {
+-        User user = authService.getCurrentUser();
+-        userStatsService.updateStreak(user);
++        userStatsService.updateStreak();
+         return ResponseEntity.ok().build();
+     }
+ 
+-    @PostMapping("/user-stats/progress")
++    @PostMapping("/user-stats/progress") // redundant parameter, userId is already in security context
+     public ResponseEntity<?> addProgress(@RequestBody Map<String, Integer> payload) {
+         int reviewed = payload.getOrDefault("reviewed", 1);
+-        User user = authService.getCurrentUser();
+-        return ResponseEntity.ok(userStatsService.addReviewed(user, reviewed));
++        return ResponseEntity.ok(userStatsService.addReviewed(reviewed));
+     }
+ 
+ }
+diff --git a/back/src/main/java/io/github/flashlearn/app/user_stats/entity/UserStats.java b/back/src/main/java/io/github/flashlearn/app/user_stats/entity/UserStats.java
+index 2ddd2a9..6dc0700 100644
+--- a/back/src/main/java/io/github/flashlearn/app/user_stats/entity/UserStats.java
++++ b/back/src/main/java/io/github/flashlearn/app/user_stats/entity/UserStats.java
+@@ -11,8 +11,7 @@ import java.time.LocalDate;
+ @Table(name = "user_stats")
+ public class UserStats {
+ 
+-    @Id
+-    @GeneratedValue(strategy = GenerationType.IDENTITY)
++    @Id // removed @GeneratedValue cuz @MapsId
+     private Long id;
+ 
+     @OneToOne
+diff --git a/back/src/main/java/io/github/flashlearn/app/user_stats/exception/UserStatsNotFoundException.java b/back/src/main/java/io/github/flashlearn/app/user_stats/exception/UserStatsNotFoundException.java
+index 01b0b96..53374bc 100644
+--- a/back/src/main/java/io/github/flashlearn/app/user_stats/exception/UserStatsNotFoundException.java
++++ b/back/src/main/java/io/github/flashlearn/app/user_stats/exception/UserStatsNotFoundException.java
+@@ -1,7 +1,7 @@
+ package io.github.flashlearn.app.user_stats.exception;
+ 
+ public class UserStatsNotFoundException extends RuntimeException {
+-    public UserStatsNotFoundException(String message) {
+-        super(message);
++    public UserStatsNotFoundException(Long userId) {
++        super("User stats not found: userId:" + userId);
+     }
+ }
+diff --git a/back/src/main/java/io/github/flashlearn/app/user_stats/repository/UserStatsRepository.java b/back/src/main/java/io/github/flashlearn/app/user_stats/repository/UserStatsRepository.java
+index 2172b90..343bd4d 100644
+--- a/back/src/main/java/io/github/flashlearn/app/user_stats/repository/UserStatsRepository.java
++++ b/back/src/main/java/io/github/flashlearn/app/user_stats/repository/UserStatsRepository.java
+@@ -8,5 +8,5 @@ import java.util.Optional;
+ 
+ public interface UserStatsRepository extends JpaRepository<UserStats, Long> {
+     Optional<UserStats> findByUser(User user);
+-    Optional<UserStats> findByUser_Username(String username);
++    Optional<UserStats> findByUserId(Long userId);
+ }
+diff --git a/back/src/main/java/io/github/flashlearn/app/user_stats/service/UserStatsService.java b/back/src/main/java/io/github/flashlearn/app/user_stats/service/UserStatsService.java
+index a407679..f03f62c 100644
+--- a/back/src/main/java/io/github/flashlearn/app/user_stats/service/UserStatsService.java
++++ b/back/src/main/java/io/github/flashlearn/app/user_stats/service/UserStatsService.java
+@@ -1,5 +1,6 @@
+ package io.github.flashlearn.app.user_stats.service;
+ 
++import io.github.flashlearn.app.auth.security.SecurityUtils;
+ import io.github.flashlearn.app.user.entity.User;
+ import io.github.flashlearn.app.user.exception.UserNotFoundException;
+ import io.github.flashlearn.app.user_stats.entity.UserStats;
+@@ -14,10 +15,11 @@ import java.time.LocalDate;
+ public class UserStatsService {
+ 
+     private final UserStatsRepository userStatsRepository;
++    private final SecurityUtils securityUtils;
+ 
+     public UserStats getFreshStats(User user) {
+         UserStats userStats = userStatsRepository.findByUser(user)
+-                .orElseThrow(() -> new UserNotFoundException("User not found: " + user.getUsername()));
++                .orElseThrow(() -> new UserNotFoundException(user.getId())); // proper message
+ 
+         LocalDate today = LocalDate.now();
+         if (userStats.getReviewedDate() == null || !userStats.getReviewedDate().equals(today)) {
+@@ -29,16 +31,17 @@ public class UserStatsService {
+         return userStats;
+     }
+ 
+-    public void updateStreak(User user) {
+-        UserStats userStats = userStatsRepository.findByUser(user)
+-                .orElseThrow(() -> new UserNotFoundException("User not found: " + user.getUsername()));
++    public void updateStreak() { // redundant parameter, userId is already in security context
++        User userRef = securityUtils.getCurrentUserRef();
++        UserStats userStats = userStatsRepository.findByUser(userRef)
++                .orElseThrow(() -> new UserNotFoundException(SecurityUtils.getCurrentUserId()));
+ 
+         LocalDate today = LocalDate.now();
+         LocalDate last = userStats.getLastLoginDate();
+ 
+-        if(last == null || !last.equals(today)) {
++        if (last == null || !last.equals(today)) {
+ 
+-            if(last != null && last.equals(today.minusDays(1))) {
++            if (last != null && last.equals(today.minusDays(1))) {
+                 userStats.setStreak(userStats.getStreak() + 1);
+             } else {
+                 userStats.setStreak(1);
+@@ -49,9 +52,10 @@ public class UserStatsService {
+         }
+     }
+ 
+-    public UserStats addReviewed(User user, int reviewedCount) {
+-        if (reviewedCount <= 0) return getFreshStats(user);
+-        UserStats stats = getFreshStats(user);
++    public UserStats addReviewed(int reviewedCount) {
++        User userRef = securityUtils.getCurrentUserRef();
++        if (reviewedCount <= 0) return getFreshStats(userRef);
++        UserStats stats = getFreshStats(userRef);
+         stats.setReviewedToday(stats.getReviewedToday() + reviewedCount);
+         if (stats.getReviewedToday() >= stats.getDailyGoal()) {
+             stats.setDailyGoalCompleted(true);
+diff --git a/back/src/main/resources/application-docker.yml b/back/src/main/resources/application-docker.yml
+deleted file mode 100644
+index 3c2919b..0000000
+--- a/back/src/main/resources/application-docker.yml
++++ /dev/null
+@@ -1,10 +0,0 @@
+-spring:
+-  datasource:
+-    url: jdbc:mysql://mysql:3306/flashlearn
+-    username: flashuser
+-    password: flashpass
+-
+-  jpa:
+-    hibernate:
+-      ddl-auto: update
+-    show-sql: true
+diff --git a/front/package-lock.json b/front/package-lock.json
+index 344d82f..4bdfb8e 100644
+--- a/front/package-lock.json
++++ b/front/package-lock.json
+@@ -10523,6 +10523,20 @@
+       "integrity": "sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==",
+       "license": "ISC"
+     },
++    "node_modules/fsevents": {
++      "version": "2.3.3",
++      "resolved": "https://registry.npmjs.org/fsevents/-/fsevents-2.3.3.tgz",
++      "integrity": "sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==",
++      "hasInstallScript": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "darwin"
++      ],
++      "engines": {
++        "node": "^8.16.0 || ^10.6.0 || >=11.0.0"
++      }
++    },
+     "node_modules/function-bind": {
+       "version": "1.1.2",
+       "resolved": "https://registry.npmjs.org/function-bind/-/function-bind-1.1.2.tgz",
+@@ -18351,23 +18365,6 @@
+         }
+       }
+     },
+-    "node_modules/tailwindcss/node_modules/yaml": {
+-      "version": "2.8.2",
+-      "resolved": "https://registry.npmjs.org/yaml/-/yaml-2.8.2.tgz",
+-      "integrity": "sha512-mplynKqc1C2hTVYxd0PU2xQAc22TI1vShAYGksCCfxbn/dFwnHTNi1bvYsBTkhdUNtGIf5xNOg938rrSSYvS9A==",
+-      "license": "ISC",
+-      "optional": true,
+-      "peer": true,
+-      "bin": {
+-        "yaml": "bin.mjs"
+-      },
+-      "engines": {
+-        "node": ">= 14.6"
+-      },
+-      "funding": {
+-        "url": "https://github.com/sponsors/eemeli"
+-      }
+-    },
+     "node_modules/tapable": {
+       "version": "2.3.0",
+       "resolved": "https://registry.npmjs.org/tapable/-/tapable-2.3.0.tgz",

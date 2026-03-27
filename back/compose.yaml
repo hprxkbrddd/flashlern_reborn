@@ -1,0 +1,36 @@
+services:
+
+  mysql:
+    image: mysql:8.0
+    container_name: flashlearn-mysql
+    environment:
+      MYSQL_DATABASE: flashlearn
+      MYSQL_USER: flashuser
+      MYSQL_PASSWORD: flashpass
+      MYSQL_ROOT_PASSWORD: rootpass
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      retries: 5
+
+  server:
+    build:
+      context: .
+    container_name: flashlearn-backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/flashlearn
+      SPRING_DATASOURCE_USERNAME: flashuser
+      SPRING_DATASOURCE_PASSWORD: flashpass
+      SPRING_PROFILES_ACTIVE: docker
+
+volumes:
+  mysql_data:

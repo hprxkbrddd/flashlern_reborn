@@ -1,0 +1,173 @@
+/* Profile Page Styles - Redesigned */
+
+/* Profile header card */
+.profile-header {
+  animation: slideInUp 0.4s ease-out;
+}
+
+.profile-avatar-large {
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+  transition: transform 0.3s ease;
+}
+
+.profile-avatar-large:hover {
+  transform: scale(1.05);
+}
+
+/* Edit button styling */
+.profile-edit-btn:hover {
+  background: #ea580c !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
+}
+
+.profile-edit-btn:active {
+  transform: translateY(0);
+}
+
+/* Tab styling */
+.profile-tabs button:hover {
+  border-color: #f97316;
+  background: #fef3c7;
+}
+
+.profile-tabs button:active {
+  transform: scale(0.98);
+}
+
+/* Animations */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Search input focus state */
+input[type="text"] {
+  transition: all 0.2s ease;
+}
+
+input[type="text"]:focus {
+  outline: none;
+  border-color: #f97316 !important;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1) !important;
+  background: #fafafa;
+}
+
+/* Friend list styling */
+.profile-friends-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Statistics cards */
+.stat-card {
+  transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+  .dashboard-content {
+    flex-direction: column !important;
+  }
+
+  [style*="width: 300px; flexShrink: 0"] {
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .profile-header {
+    flex-direction: column !important;
+    text-align: center;
+  }
+
+  .profile-header h1 {
+    font-size: 24px !important;
+  }
+
+  [style*="display: grid; gridTemplateColumns: repeat(3, 1fr)"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Friend online indicator */
+.friend-card-online::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: #10b981;
+  border-radius: 50%;
+  margin-right: 8px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Placeholder styles */
+.profile-error {
+  color: #dc2626;
+  text-align: center;
+  padding: 20px;
+  background: #fee2e2;
+  border-radius: 8px;
+}
+
+/* Card hover effects */
+@media (hover: hover) {
+  [role="button"] {
+    cursor: pointer;
+  }
+}
+
+/* Sticky positioning support */
+@supports (position: sticky) {
+  [style*="position: sticky"] {
+    will-change: transform;
+  }
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Text selection */
+::selection {
+  background: rgba(249, 115, 22, 0.2);
+  color: inherit;
+}
+
+::-moz-selection {
+  background: rgba(249, 115, 22, 0.2);
+  color: inherit;
+}
+
