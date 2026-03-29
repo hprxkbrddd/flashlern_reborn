@@ -16,6 +16,7 @@ import io.github.flashlearn.app.settings.exception.UserSettingsNotFoundException
 import io.github.flashlearn.app.user.exception.EmailIsTakenException;
 import io.github.flashlearn.app.user.exception.UserAlreadyExistsException;
 import io.github.flashlearn.app.user.exception.UserNotFoundException;
+import io.github.flashlearn.app.user_stats.exception.UserStatsNotFoundException;
 import io.micrometer.tracing.Tracer;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,8 +26,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.validation.BindException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.time.Instant;
 
@@ -273,6 +280,49 @@ public class GlobalExceptionHandler{
         ApiError body = new ApiError(HttpStatus.NOT_FOUND.value(), "USER_SETTINGS_NOT_FOUND", ex.getMessage(),
                 Instant.now(), request.getRequestURI(), traceId);
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+    }
+
+    // User stats not found
+    @ExceptionHandler(UserStatsNotFoundException.class)
+    public ResponseEntity<ApiError> userStatsNotFoundExceptionHandler(UserStatsNotFoundException ex,
+                                                                      HttpServletRequest request) {
+        String traceId = tracer.currentSpan() != null
+                ? tracer.currentSpan().context().traceId()
+                : "N/A";
+
+        log.warn("User stats not found: {}", ex.getMessage());
+
+        ApiError body = new ApiError(HttpStatus.NOT_FOUND.value(), "USER_STATS_NOT_FOUND", ex.getMessage(),
+                Instant.now(), request.getRequestURI(), traceId);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+    }
+
+    // Malformed or invalid client input
+    @ExceptionHandler({
+            MethodArgumentNotValidException.class,
+            BindException.class,
+            HttpMessageNotReadableException.class,
+            MissingServletRequestParameterException.class,
+            MissingServletRequestPartException.class,
+            MethodArgumentTypeMismatchException.class
+    })
+    public ResponseEntity<ApiError> badRequestExceptionHandler(Exception ex,
+                                                               HttpServletRequest request) {
+        String traceId = tracer.currentSpan() != null
+                ? tracer.currentSpan().context().traceId()
+                : "N/A";
+
+        log.warn("Bad request: {}", ex.getMessage());
+
+        ApiError body = new ApiError(
+                HttpStatus.BAD_REQUEST.value(),
+                "BAD_REQUEST",
+                ex.getMessage(),
+                Instant.now(),
+                request.getRequestURI(),
+                traceId
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 
     //Flashcard set not found
