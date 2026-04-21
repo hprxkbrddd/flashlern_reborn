@@ -1,24 +1,40 @@
-import {View, Text, TouchableOpacity, StyleSheet, Button} from 'react-native';
+import {View, TouchableOpacity, StyleSheet} from 'react-native';
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from 'expo-router';
+
+type Props = {
+  onPress: () => void;
+};
+
 export function Sidebar() {
+  const router = useRouter();
+  
   return (
       <View style={styles.container}>
           <View style={styles.up}>
-            <TouchableOpacity style={styles.iconBox}>
+            <TouchableOpacity
+              style={styles.iconBox}
+              onPress={() => router.replace('/')}>
                 <Ionicons name="home-outline" size={18} color="#333" />
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.iconBox}>
+            <TouchableOpacity
+              style={styles.iconBox}
+              onPress={() => router.replace('/profile')}>
                 <Ionicons name="person-outline" size={18} color="#333" />
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.iconBox}>
+            <TouchableOpacity
+              style={styles.iconBox}
+              onPress={() => router.replace('/')}>
                 <Ionicons name="settings-outline" size={18} color="#333" />
             </TouchableOpacity>
           </View>
 
           <View style={styles.down}>
-            <TouchableOpacity style={styles.iconBox}>
+            <TouchableOpacity
+              style={styles.iconBox}
+              onPress={() => router.push('/register')}>
                 <Ionicons name="log-out-outline" size={18} color="#333" />
             </TouchableOpacity>
           </View>

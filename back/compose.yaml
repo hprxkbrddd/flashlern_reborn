@@ -17,20 +17,20 @@ services:
       interval: 10s
       retries: 5
 
-#  server:
-#    build:
-#      context: .
-#    container_name: flashlearn-backend
-#    ports:
-#      - "8080:8080"
-#    depends_on:
-#      mysql:
-#        condition: service_healthy
-#    environment:
-#      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/flashlearn
-#      SPRING_DATASOURCE_USERNAME: flashuser
-#      SPRING_DATASOURCE_PASSWORD: flashpass
-#      SPRING_PROFILES_ACTIVE: docker
+  server:
+    build:
+      context: .
+    container_name: flashlearn-backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/flashlearn
+      SPRING_DATASOURCE_USERNAME: flashuser
+      SPRING_DATASOURCE_PASSWORD: flashpass
+      SPRING_PROFILES_ACTIVE: docker
 
 volumes:
   mysql_data:
