@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet, Alert } from "react-native";
-import axios from "axios";
 import { useRouter } from "expo-router";
+import api from "@/api/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { jwtDecode } from 'jwt-decode';
 
 const Login = () => {
     const router = useRouter();
@@ -30,21 +32,21 @@ const Login = () => {
         try {
             setLoading(true);
 
-            const response = await axios.post(
-            "http://localhost:8080/api/auth/login",
+            const response = await api.post(
+            '/auth/login',
             {
                 username: name,
                 password,
             });
 
-            console.log("Успех:", response.data);
-            Alert.alert("Успех", "Вы вошли в систему");
+            const token = response.data.token;
+            const decoded = jwtDecode(token) as any;
+            await AsyncStorage.setItem("username", name);
+            await AsyncStorage.setItem("token", token);
+            await AsyncStorage.setItem("userId", decoded.id);
+
             router.replace('/');
         } catch (error: any) {
-            console.log(error.response?.data || error.message);
-            console.log("ПРОВАЛ", "Ошибка входа");
-
-            Alert.alert("Ошибка", "Не удалось войти");
         } finally {
             setLoading(false);
         }

@@ -14,19 +14,19 @@ export function Sidebar() {
           <View style={styles.up}>
             <TouchableOpacity
               style={styles.iconBox}
-              onPress={() => router.replace('/')}>
+              onPress={() => router.push('/')}>
                 <Ionicons name="home-outline" size={18} color="#333" />
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.iconBox}
-              onPress={() => router.replace('/profile')}>
+              onPress={() => router.push('/profile')}>
                 <Ionicons name="person-outline" size={18} color="#333" />
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.iconBox}
-              onPress={() => router.replace('/')}>
+              onPress={() => router.push('/')}>
                 <Ionicons name="settings-outline" size={18} color="#333" />
             </TouchableOpacity>
           </View>

@@ -1,17 +1,53 @@
+import api from "@/api/api";
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ProfileUserInfo = () => {
+    const router = useRouter();
+    const [username, setUsername] = useState<string | null>();
+    const [bio, setBio] = useState(null);
+
+    useEffect(() => {
+      const loadUsername = async () => {
+      const name = await AsyncStorage.getItem('username');
+      setUsername(name);
+    };
+
+      loadUsername();
+    }, []);
+
+    useEffect(() => {
+      if (!username) return;
+
+      const fetchProfile = async () => {
+        try {
+          const response = await api.get(`/profile/${username}`);
+          setBio(response.data.aboutMe);
+        } catch (error) {
+          console.error(error);
+        }
+      };
+
+      fetchProfile();
+    }, [username]);
+
     return(
         <View style={styles.container}>
             <View style={styles.avatar}>
-                <Text style={styles.avatarText}>A</Text>
+                <Text style={styles.avatarText}>{username?.charAt(0)}</Text>
             </View>
             <View style={styles.userInfo}>
-                <Text style={styles.username}>testuser</Text>
-                <Text style={styles.bio}>No description provided yet.</Text>
+                <Text style={styles.username}>{username}</Text>
+                {!bio ? (
+                <Text style={styles.bio}>No description provided yet.</Text>) : (
+                <Text style={styles.bio}>{bio}</Text>)}
             </View>
             <TouchableOpacity style={styles.editButton} activeOpacity={0.6}>
-                <Text style={styles.editButtonText}>Edit profile</Text>
+                <Text 
+                  style={styles.editButtonText}
+                  onPress={() => router.push('/editProfile')}>Edit profile</Text>
             </TouchableOpacity>
         </View>
     )

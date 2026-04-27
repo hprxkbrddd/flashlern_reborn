@@ -1,8 +1,37 @@
-import { useState } from "react";
+import api from "@/api/api";
+import { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 
 const ProfileTabs = () => {
     const [activeTab, setActiveTab] = useState('About');
+    const [streak, setStreak] = useState();
+    const [reviewedToday, setReviewedToday] = useState();
+    const [setsCreated, setSetsCreated] = useState();
+
+    useEffect(() => {
+      fetchStats();
+      fetchSetsCount();
+    }, []);
+
+    const fetchStats = async () => {
+      try {
+        const response = await api.post('user-stats/progress',{});
+        setStreak(response.data.streak);
+        setReviewedToday(response.data.reviewedToday);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    const fetchSetsCount = async () => {
+      try {
+        const response = await api.get('/flashcards');
+        setSetsCreated(response.data.length);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
     return(
         <View>
             <View style={styles.tabsContainer}>
@@ -36,15 +65,15 @@ const ProfileTabs = () => {
                 {activeTab === 'Statistics' && (
                     <View style={styles.statisticsContainer}>
                         <View style={styles.statsSetsCreated}>
-                            <Text style={styles.statsSetsCreatedCount}>0</Text>
+                            <Text style={styles.statsSetsCreatedCount}>{setsCreated}</Text>
                             <Text style={styles.statsSetsCreatedText}>Sets created</Text>
                         </View>
                         <View style={styles.statsCardsLearned}>
-                            <Text style={styles.statsCardsLearnedCount}>0</Text>
+                            <Text style={styles.statsCardsLearnedCount}>{reviewedToday}</Text>
                             <Text style={styles.statsCardsLearnedText}>Cards learned</Text>
                         </View>
                         <View style={styles.statsDayStreak}>
-                            <Text style={styles.statsDayStreakCount}>0</Text>
+                            <Text style={styles.statsDayStreakCount}>{streak}</Text>
                             <Text style={styles.statsDayStreakText}>Day streak</Text>
                         </View>
                     </View>

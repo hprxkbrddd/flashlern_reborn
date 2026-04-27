@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet, Alert } from "react-native";
-import axios from "axios";
 import { useRouter } from "expo-router";
+import api from "@/api/api";
 
 const Register = () => {
     const router = useRouter();
@@ -34,27 +34,18 @@ const Register = () => {
 
     const handleRegister = async () => {
         if (!validate()) return;
-
         try {
             setLoading(true);
 
-            const response = await axios.post(
-            "http://localhost:8080/api/auth/register",
+            const response = await api.post(
+            '/auth/register',
             {
                 username: name,
                 password,
                 email,
             });
-
-            Alert.alert("Успех", "Регистрация прошла успешно");
-            console.log("Успех", "Регистрация прошла успешно");
-            console.log(response.data);
             router.replace('/login');
         } catch (error: any) {
-            console.log(error.response?.data || error.message);
-            console.log("ПРОВАЛ", "Регистрация не удалась");
-
-            Alert.alert("Ошибка", "Не удалось зарегистрироваться");
         } finally {
             setLoading(false);
         }
